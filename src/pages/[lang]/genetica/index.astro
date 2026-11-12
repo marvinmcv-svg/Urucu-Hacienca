@@ -1,0 +1,80 @@
+---
+import Base from '../../../layouts/Base.astro';
+import PageHero from '../../../components/PageHero.astro';
+import SectionHead from '../../../components/SectionHead.astro';
+import VideoPlayer from '../../../components/VideoPlayer.astro';
+import WaButton from '../../../components/WaButton.astro';
+import { Image } from 'astro:assets';
+import { locales, useT, type Locale } from '../../../i18n/ui';
+import { breeds, aiResults, aiTotal } from '../../../data/site';
+import { photo } from '../../../lib/media';
+
+export const getStaticPaths = () => locales.map((lang) => ({ params: { lang } }));
+const lang = Astro.params.lang as Locale;
+const t = useT(lang);
+const fmt = (n: number) => n.toLocaleString(lang, { maximumFractionDigits: 2 });
+const programs = [
+  ['genetics.p.bulls', 'genetics.p.bulls_d', 'animal'],
+  ['genetics.p.females', 'genetics.p.females_d', 'animal'],
+  ['genetics.p.semen', 'genetics.p.semen_d', 'genetics'],
+  ['genetics.p.fiv', 'genetics.p.fiv_d', 'genetics'],
+] as const;
+---
+<Base lang={lang} title={t('genetics.eyebrow')} description={t('genetics.lead')} image={photo('otima-donante')}>
+  <PageHero eyebrow={t('genetics.eyebrow')} title={t('genetics.title')} lead={t('genetics.lead')} image="otima-donante" position="50% 40%" />
+
+  <section class="container-x py-24 lg:py-32">
+    <SectionHead eyebrow={t('home.breeds.eyebrow')} title={t('home.breeds.title')} />
+    <div class="mt-14 grid gap-10 md:grid-cols-3">
+      {breeds.map((b) => (
+        <article data-reveal id={b.id}>
+          <div class="aspect-[4/5] overflow-hidden rounded-2xl">
+            <Image src={photo(b.photo)} alt={b.name[lang]} widths={[480, 720, 960]} sizes="(min-width:768px) 33vw, 100vw" class="size-full object-cover" />
+          </div>
+          <h3 class="mt-6 text-2xl">{b.name[lang]}</h3>
+          <p class="mt-2 leading-relaxed text-ink-soft">{b.text[lang]}</p>
+          <WaButton intent="genetics" lang={lang} vars={{ breed: b.name[lang] }} variant="ghost" class="mt-5 py-2.5!">{t('cta.ask_genetics')}</WaButton>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <section class="bg-ink text-cream py-24 lg:py-32">
+    <div class="container-x">
+      <SectionHead tone="cream" eyebrow={t('genetics.eyebrow')} title={t('genetics.programs.title')} />
+      <ul class="mt-14 grid gap-px overflow-hidden rounded-2xl bg-cream/10 sm:grid-cols-2 lg:grid-cols-4">
+        {programs.map(([title, desc, intent]) => (
+          <li data-reveal class="flex flex-col bg-ink p-8">
+            <h3 class="text-2xl">{t(title)}</h3>
+            <p class="mt-3 flex-1 text-sm leading-relaxed text-cream/75">{t(desc)}</p>
+            <WaButton intent={intent} lang={lang} variant="light" class="mt-7 self-start py-2.5!">{t('cta.whatsapp')}</WaButton>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <section class="container-x grid gap-12 py-24 lg:grid-cols-[1.2fr_0.8fr] lg:gap-20 lg:py-32">
+    <div>
+      <SectionHead eyebrow="Nelore · IA" title={t('genetics.results.title')} lead={t('genetics.results.lead')} />
+      <div data-reveal class="mt-10 overflow-x-auto">
+        <table class="w-full min-w-[34rem] text-left text-sm">
+          <thead class="border-b border-ink/20 text-xs uppercase tracking-wider text-ink-soft">
+            <tr><th class="py-3 pr-4 font-semibold">{t('genetics.results.bull')}</th><th class="py-3 pr-4 font-semibold">{t('genetics.results.pedigree')}</th><th class="py-3 text-right font-semibold">{t('genetics.results.rate')}</th></tr>
+          </thead>
+          <tbody>
+            {aiResults.map((r) => (
+              <tr class="border-b border-ink/10">
+                <td class="py-4 pr-4"><span class="font-display text-lg">{r.name}</span><span class="block text-xs text-ink-soft">{r.rgn}</span></td>
+                <td class="py-4 pr-4 text-ink-soft">{r.pedigree}</td>
+                <td class="py-4 text-right font-display text-xl text-copper">{fmt(r.rate)}%</td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot><tr><td colspan="2" class="pt-5 font-semibold">{t('genetics.results.total')}</td><td class="pt-5 text-right font-display text-3xl text-copper">{fmt(aiTotal)}%</td></tr></tfoot>
+        </table>
+      </div>
+    </div>
+    <VideoPlayer id="genio-semen" title="Genio FIV Urucú · ApexGen" credit="@apexgen.bolivia" class="self-center" />
+  </section>
+</Base>

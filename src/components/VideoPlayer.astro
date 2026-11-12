@@ -1,0 +1,16 @@
+---
+interface Props { id: string; title: string; credit?: string; class?: string; landscape?: boolean }
+import { videoSrc, posterSrc, isLandscape } from '../lib/media';
+const { id, title, credit, class: cls = '', landscape = isLandscape(Astro.props.id) } = Astro.props;
+---
+<figure class:list={['group', cls]}>
+  <div class:list={['relative overflow-hidden rounded-2xl bg-ink', landscape ? 'aspect-video' : 'aspect-[9/16]']}>
+    <video class="absolute inset-0 size-full object-cover" controls playsinline preload="none" poster={posterSrc(id)} aria-label={title}>
+      <source src={videoSrc(id)} type="video/mp4" />
+    </video>
+  </div>
+  <figcaption class="mt-3 text-sm text-ink-soft">
+    <span class="text-ink font-medium">{title}</span>
+    {credit && <span class="block text-xs mt-0.5">🎥 {credit}</span>}
+  </figcaption>
+</figure>

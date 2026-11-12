@@ -1,0 +1,55 @@
+---
+import Logo from './Logo.astro';
+import { locales, localeNames, href, useT, type Locale, type RouteKey } from '../i18n/ui';
+interface Props { lang: Locale; altPaths: Record<Locale, string> }
+const { lang, altPaths } = Astro.props;
+const t = useT(lang);
+const nav: [RouteKey, Parameters<typeof t>[0]][] = [
+  ['about', 'nav.about'], ['genetics', 'nav.genetics'], ['herd', 'nav.herd'], ['auctions', 'nav.auctions'], ['gallery', 'nav.gallery'], ['contact', 'nav.contact'],
+];
+const current = Astro.url.pathname;
+---
+<header class="sticky top-0 z-40 bg-cream/90 backdrop-blur-md border-b border-ink/10">
+  <div class="container-x flex h-18 items-center justify-between gap-6">
+    <a href={href(lang)} class="text-[15px] py-2"><Logo /></a>
+    <nav aria-label="Principal" class="hidden lg:block">
+      <ul class="flex items-center gap-8 text-[13px] font-medium tracking-wide">
+        {nav.map(([r, k]) => {
+          const h = href(lang, r);
+          const active = current.startsWith(h);
+          return <li><a href={h} aria-current={active ? 'page' : undefined} class:list={['py-2 transition-colors hover:text-copper', active ? 'text-copper' : 'text-ink']}>{t(k)}</a></li>;
+        })}
+      </ul>
+    </nav>
+    <div class="flex items-center gap-3">
+      <ul class="hidden sm:flex items-center text-xs font-semibold tracking-wider" aria-label={t('nav.language')}>
+        {locales.map((l) => (
+          <li><a href={altPaths[l]} hreflang={l} lang={l} title={localeNames[l]} aria-current={l === lang ? 'true' : undefined}
+            class:list={['px-2 py-2 uppercase', l === lang ? 'text-copper' : 'text-ink-soft hover:text-ink']}>{l}</a></li>
+        ))}
+      </ul>
+      <button type="button" id="menu-btn" class="lg:hidden inline-flex items-center gap-2 rounded-full border border-ink/20 px-4 py-2 text-xs font-semibold uppercase tracking-wider" aria-expanded="false" aria-controls="mobile-menu">
+        {t('nav.menu')}
+      </button>
+    </div>
+  </div>
+  <div id="mobile-menu" hidden class="lg:hidden border-t border-ink/10 bg-cream">
+    <nav aria-label="Móvil" class="container-x py-6">
+      <ul class="flex flex-col">
+        {nav.map(([r, k]) => <li><a href={href(lang, r)} class="block py-3 font-display text-2xl border-b border-ink/10">{t(k)}</a></li>)}
+      </ul>
+      <ul class="mt-6 flex gap-2" aria-label={t('nav.language')}>
+        {locales.map((l) => <li><a href={altPaths[l]} hreflang={l} lang={l} class:list={['rounded-full border px-4 py-2 text-xs font-semibold', l === lang ? 'border-copper text-copper' : 'border-ink/20']}>{localeNames[l]}</a></li>)}
+      </ul>
+    </nav>
+  </div>
+</header>
+<script>
+  const btn = document.getElementById('menu-btn')!;
+  const menu = document.getElementById('mobile-menu')!;
+  btn.addEventListener('click', () => {
+    const open = btn.getAttribute('aria-expanded') === 'true';
+    btn.setAttribute('aria-expanded', String(!open));
+    menu.hidden = open;
+  });
+</script>

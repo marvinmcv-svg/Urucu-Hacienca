@@ -1,0 +1,189 @@
+---
+// Floating dock: WhatsApp intent menu + Marvin AI chat. Vanilla TS, no framework.
+import { useT, type Locale } from '../i18n/ui';
+import { intents, waLink } from '../lib/wa';
+interface Props { lang: Locale }
+const { lang } = Astro.props;
+const t = useT(lang);
+const strings = {
+  greeting: t('marvin.greeting'),
+  error: t('marvin.error'),
+  handoff: t('marvin.handoff'),
+};
+---
+<div id="concierge" data-lang={lang} data-strings={JSON.stringify(strings)} class="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-3 sm:bottom-6 sm:right-6">
+
+  <!-- Marvin panel -->
+  <section id="marvin-panel" hidden role="dialog" aria-modal="false" aria-labelledby="marvin-title"
+    class="flex w-[calc(100vw-2rem)] max-w-sm flex-col overflow-hidden rounded-2xl bg-cream shadow-2xl ring-1 ring-ink/10 h-[min(34rem,calc(100dvh-7rem))]">
+    <header class="flex items-center gap-3 bg-ink px-4 py-3 text-cream">
+      <span aria-hidden="true" class="grid size-9 place-items-center rounded-full bg-copper font-display text-lg">M</span>
+      <div class="flex-1 leading-tight">
+        <h2 id="marvin-title" class="font-display text-lg">{t('marvin.title')}</h2>
+        <p class="text-xs text-cream/70">{t('marvin.subtitle')}</p>
+      </div>
+      <button type="button" data-close="marvin" class="rounded-full p-2 hover:bg-cream/10" aria-label={t('nav.close')}>
+        <svg aria-hidden="true" viewBox="0 0 24 24" class="size-5 stroke-current" fill="none" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </header>
+    <ol id="marvin-log" class="flex-1 space-y-3 overflow-y-auto px-4 py-4 text-[15px] leading-relaxed" aria-live="polite"></ol>
+    <div id="marvin-suggest" class="flex flex-wrap gap-2 px-4 pb-3">
+      {(['marvin.suggest.1', 'marvin.suggest.2', 'marvin.suggest.3'] as const).map((k) => (
+        <button type="button" class="rounded-full border border-copper/40 px-3 py-1.5 text-xs text-copper-dark hover:bg-copper hover:text-cream">{t(k)}</button>
+      ))}
+    </div>
+    <form id="marvin-form" class="flex items-end gap-2 border-t border-ink/10 bg-white/60 p-3">
+      <label for="marvin-input" class="sr-only">{t('marvin.placeholder')}</label>
+      <textarea id="marvin-input" rows="1" maxlength="800" placeholder={t('marvin.placeholder')}
+        class="max-h-28 flex-1 resize-none rounded-xl border border-ink/15 bg-white px-3 py-2.5 text-[15px] outline-none focus:border-copper"></textarea>
+      <button type="submit" class="rounded-xl bg-copper px-4 py-2.5 text-sm font-semibold text-cream hover:bg-copper-dark disabled:opacity-50">{t('marvin.send')}</button>
+    </form>
+    <p class="px-4 pb-3 text-[11px] leading-snug text-ink-soft">{t('marvin.disclaimer')}</p>
+  </section>
+
+  <!-- WhatsApp menu -->
+  <section id="wa-menu" hidden aria-labelledby="wa-title" class="w-72 overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-ink/10">
+    <header class="bg-wa-dark px-4 py-3 text-white">
+      <h2 id="wa-title" class="text-sm font-semibold">{t('dock.title')}</h2>
+      <p class="text-xs text-white/80">WhatsApp · +591 771 65787</p>
+    </header>
+    <ul class="divide-y divide-ink/5">
+      {intents.map((i) => (
+        <li><a href={waLink(i, lang)} target="_blank" rel="noopener" data-wa-intent={i} class="flex items-center justify-between px-4 py-3 text-sm hover:bg-cream">
+          {t(`intent.${i}` as const)}<span aria-hidden="true" class="text-wa-dark">→</span></a></li>
+      ))}
+    </ul>
+  </section>
+
+  <div class="flex items-center gap-3">
+    <button type="button" id="marvin-btn" aria-expanded="false" aria-controls="marvin-panel"
+      class="flex items-center gap-2 rounded-full bg-ink py-2 pl-2 pr-4 text-sm font-semibold text-cream shadow-lg ring-1 ring-cream/10 hover:bg-[#3a2819]">
+      <span aria-hidden="true" class="grid size-8 place-items-center rounded-full bg-copper font-display">M</span>
+      <span class="hidden sm:inline">{t('marvin.open')}</span><span class="sm:hidden">Marvin</span>
+    </button>
+    <button type="button" id="wa-btn" aria-expanded="false" aria-controls="wa-menu" aria-label={t('cta.whatsapp')}
+      class="grid size-14 place-items-center rounded-full bg-wa text-white shadow-lg hover:scale-105 transition-transform">
+      <svg aria-hidden="true" viewBox="0 0 24 24" class="size-7 fill-current"><path d="M17.47 14.38c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.64.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.49-1.77-1.66-2.07-.17-.3-.02-.46.13-.6.13-.14.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.03-.52-.07-.15-.67-1.61-.92-2.2-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.21 3.08c.15.2 2.1 3.2 5.08 4.49.71.31 1.26.49 1.7.63.71.22 1.36.19 1.87.12.57-.09 1.76-.72 2.01-1.41.25-.7.25-1.29.17-1.41-.07-.13-.27-.2-.57-.35M12.05 21.8h-.01a9.87 9.87 0 0 1-5.03-1.38l-.36-.21-3.74.98 1-3.65-.24-.37a9.86 9.86 0 0 1-1.51-5.26c0-5.45 4.44-9.88 9.89-9.88 2.64 0 5.12 1.03 6.99 2.9a9.82 9.82 0 0 1 2.89 6.99c0 5.45-4.44 9.88-9.88 9.88m8.41-18.3A11.82 11.82 0 0 0 12.05 0C5.5 0 .16 5.34.16 11.89c0 2.1.55 4.14 1.59 5.95L.06 24l6.3-1.65a11.88 11.88 0 0 0 5.68 1.45h.01c6.55 0 11.89-5.34 11.89-11.89 0-3.18-1.24-6.16-3.48-8.41"/></svg>
+    </button>
+  </div>
+</div>
+
+<script>
+  import { waLink, intents, type Intent } from '../lib/wa';
+  import type { Locale } from '../i18n/ui';
+  import { track } from '@vercel/analytics';
+
+  type Msg = { role: 'user' | 'assistant'; content: string };
+  const root = document.getElementById('concierge')!;
+  const lang = root.dataset.lang as Locale;
+  const S = JSON.parse(root.dataset.strings!) as { greeting: string; error: string; handoff: string };
+  const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+  const panel = $('marvin-panel'), menu = $('wa-menu'), log = $<HTMLOListElement>('marvin-log');
+  const form = $<HTMLFormElement>('marvin-form'), input = $<HTMLTextAreaElement>('marvin-input');
+  const mBtn = $('marvin-btn'), wBtn = $('wa-btn'), suggest = $('marvin-suggest');
+  const KEY = 'marvin-history';
+  let history: Msg[] = JSON.parse(sessionStorage.getItem(KEY) || '[]');
+  let busy = false;
+
+  function toggle(el: HTMLElement, btn: HTMLElement, open = el.hidden) {
+    el.hidden = !open;
+    btn.setAttribute('aria-expanded', String(open));
+    return open;
+  }
+  mBtn.addEventListener('click', () => {
+    toggle(menu, wBtn, false);
+    if (toggle(panel, mBtn)) { track('marvin_open'); input.focus(); }
+  });
+  wBtn.addEventListener('click', () => { toggle(panel, mBtn, false); toggle(menu, wBtn); });
+  root.querySelector('[data-close="marvin"]')!.addEventListener('click', () => { toggle(panel, mBtn, false); mBtn.focus(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { toggle(panel, mBtn, false); toggle(menu, wBtn, false); }
+  });
+
+  // Analytics for every WhatsApp link on the site.
+  document.addEventListener('click', (e) => {
+    const a = (e.target as HTMLElement).closest<HTMLElement>('[data-wa-intent]');
+    if (a) track('wa_click', { intent: a.dataset.waIntent!, page: location.pathname });
+  });
+
+  // Marvin ends a reply with <<WA:intent>> when the visitor should continue on WhatsApp.
+  const HANDOFF = /<<WA:(\w+)>>\s*$/;
+
+  function bubble(role: Msg['role'], text: string) {
+    const li = document.createElement('li');
+    li.className = role === 'user'
+      ? 'ml-auto max-w-[85%] w-fit rounded-2xl rounded-br-sm bg-copper px-3.5 py-2.5 text-cream whitespace-pre-wrap'
+      : 'max-w-[90%] w-fit rounded-2xl rounded-bl-sm bg-white px-3.5 py-2.5 text-ink ring-1 ring-ink/5 whitespace-pre-wrap';
+    li.textContent = text;
+    log.append(li);
+    log.scrollTop = log.scrollHeight;
+    return li;
+  }
+  function handoffButton(intent: string) {
+    const i = (intents as readonly string[]).includes(intent) ? (intent as Intent) : 'general';
+    const lastQ = [...history].reverse().find((m) => m.role === 'user')?.content ?? '';
+    const li = document.createElement('li');
+    const a = document.createElement('a');
+    a.href = waLink(i, lang, {}, lastQ ? `«${lastQ.slice(0, 300)}»` : undefined);
+    a.target = '_blank'; a.rel = 'noopener'; a.dataset.waIntent = i;
+    a.className = 'inline-flex items-center gap-2 rounded-full bg-wa-dark px-4 py-2 text-sm font-semibold text-white hover:bg-[#0b6334]';
+    a.textContent = `${S.handoff} →`;
+    li.append(a);
+    log.append(li);
+    log.scrollTop = log.scrollHeight;
+  }
+  function render() {
+    log.replaceChildren();
+    bubble('assistant', S.greeting);
+    for (const m of history) {
+      const match = m.role === 'assistant' ? m.content.match(HANDOFF) : null;
+      bubble(m.role, m.content.replace(HANDOFF, '').trim());
+      if (match) handoffButton(match[1]);
+    }
+    suggest.hidden = history.length > 0;
+  }
+
+  async function ask(q: string) {
+    if (busy || !q.trim()) return;
+    busy = true; form.querySelector('button')!.disabled = true;
+    history.push({ role: 'user', content: q.trim() });
+    bubble('user', q.trim());
+    suggest.hidden = true;
+    const out = bubble('assistant', '…');
+    let text = '';
+    try {
+      const res = await fetch('/api/marvin/', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ lang, messages: history.slice(-12) }),
+      });
+      if (!res.ok || !res.body) throw new Error(String(res.status));
+      const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        text += value;
+        out.textContent = text.replace(/<<WA:?\w*>?>?\s*$/, '').trim() || '…';
+        log.scrollTop = log.scrollHeight;
+      }
+      if (!text.trim()) throw new Error('empty');
+      history.push({ role: 'assistant', content: text });
+      const match = text.match(HANDOFF);
+      if (match) handoffButton(match[1]);
+    } catch {
+      out.textContent = S.error;
+      handoffButton('general');
+      history.pop();
+    } finally {
+      sessionStorage.setItem(KEY, JSON.stringify(history));
+      busy = false; form.querySelector('button')!.disabled = false;
+    }
+  }
+
+  form.addEventListener('submit', (e) => { e.preventDefault(); const q = input.value; input.value = ''; ask(q); });
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); }
+  });
+  suggest.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => ask(b.textContent!)));
+  render();
+</script>

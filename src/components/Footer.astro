@@ -1,0 +1,33 @@
+---
+import Logo from './Logo.astro';
+import { href, useT, type Locale, type RouteKey } from '../i18n/ui';
+import { site } from '../data/site';
+import { waLink } from '../lib/wa';
+interface Props { lang: Locale }
+const { lang } = Astro.props;
+const t = useT(lang);
+const links: [RouteKey, Parameters<typeof t>[0]][] = [['about', 'nav.about'], ['genetics', 'nav.genetics'], ['herd', 'nav.herd'], ['auctions', 'nav.auctions'], ['gallery', 'nav.gallery'], ['contact', 'nav.contact']];
+---
+<footer class="bg-ink text-cream/75">
+  <div class="container-x grid gap-12 py-16 md:grid-cols-[1.4fr_1fr_1fr]">
+    <div>
+      <Logo tone="cream" class="text-[18px]" />
+      <p class="mt-6 max-w-xs text-sm leading-relaxed">{t('meta.tagline')}. {t('home.hero.title')}.</p>
+    </div>
+    <nav aria-label="Footer">
+      <ul class="grid gap-2.5 text-sm">{links.map(([r, k]) => <li><a class="hover:text-cream" href={href(lang, r)}>{t(k)}</a></li>)}</ul>
+    </nav>
+    <div class="text-sm grid gap-2.5 content-start">
+      <a class="hover:text-cream" href={waLink('general', lang)} target="_blank" rel="noopener" data-wa-intent="general">WhatsApp {site.phoneDisplay}</a>
+      <a class="hover:text-cream" href={site.instagram} target="_blank" rel="noopener">Instagram @haciendasurucu</a>
+      <a class="hover:text-cream" href={site.facebook} target="_blank" rel="noopener">Facebook</a>
+      <p class="mt-2">{site.location.ranch}<br />{site.location.area}</p>
+    </div>
+  </div>
+  <div class="border-t border-cream/10">
+    <div class="container-x flex flex-col gap-2 py-6 text-xs sm:flex-row sm:justify-between">
+      <p>© {new Date().getFullYear()} Haciendas Urucú. {t('footer.rights')}</p>
+      <p>{t('footer.credits')}</p>
+    </div>
+  </div>
+</footer>

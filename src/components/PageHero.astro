@@ -1,0 +1,23 @@
+---
+import { Image } from 'astro:assets';
+import { photo } from '../lib/media';
+interface Props { eyebrow: string; title: string; lead?: string; image?: string; position?: string }
+const { eyebrow, title, lead, image, position = '50% 50%' } = Astro.props;
+---
+{image ? (
+  <section class="relative isolate overflow-hidden">
+    <Image src={photo(image)} alt="" widths={[800, 1400, 2000]} sizes="100vw" loading="eager" fetchpriority="high" class="absolute inset-0 -z-10 size-full object-cover" style={`object-position:${position}`} />
+    <div class="absolute inset-0 -z-10 bg-gradient-to-t from-ink/85 via-ink/45 to-ink/20"></div>
+    <div class="container-x flex min-h-[62svh] flex-col justify-end pb-14 pt-32 text-cream lg:min-h-[70svh] lg:pb-20">
+      <p class="eyebrow text-[#e9b58f]!">{eyebrow}</p>
+      <h1 class="mt-4 max-w-4xl text-4xl leading-[1.05] sm:text-5xl lg:text-7xl">{title}</h1>
+      {lead && <p class="mt-6 max-w-2xl text-lg leading-relaxed text-cream/85">{lead}</p>}
+    </div>
+  </section>
+) : (
+  <section class="container-x pb-10 pt-20 lg:pb-16 lg:pt-28">
+    <p class="eyebrow">{eyebrow}</p>
+    <h1 class="mt-4 max-w-4xl text-4xl leading-[1.05] sm:text-5xl lg:text-7xl">{title}</h1>
+    {lead && <p class="mt-6 max-w-2xl text-lg leading-relaxed text-ink-soft">{lead}</p>}
+  </section>
+)}

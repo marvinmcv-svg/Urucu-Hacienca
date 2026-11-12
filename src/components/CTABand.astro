@@ -1,0 +1,19 @@
+---
+import WaButton from './WaButton.astro';
+import { href, useT, type Locale } from '../i18n/ui';
+interface Props { lang: Locale }
+const { lang } = Astro.props;
+const t = useT(lang);
+---
+<section class="bg-copper text-cream">
+  <div class="container-x flex flex-col gap-8 py-16 md:flex-row md:items-center md:justify-between md:py-20">
+    <div data-reveal class="max-w-xl">
+      <h2 class="text-3xl sm:text-4xl">{t('band.title')}</h2>
+      <p class="mt-4 text-cream/85 leading-relaxed">{t('band.lead')}</p>
+    </div>
+    <div data-reveal class="flex flex-wrap gap-3">
+      <WaButton intent="general" lang={lang} class="bg-cream! text-ink! hover:bg-white!">{t('cta.whatsapp')}</WaButton>
+      <a href={href(lang, 'contact')} class="inline-flex items-center rounded-full border border-cream/50 px-6 py-3.5 text-sm font-semibold hover:bg-cream hover:text-ink transition-colors">{t('cta.visit')}</a>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,45 @@
+---
+import { Image } from 'astro:assets';
+import Base from '../../../layouts/Base.astro';
+import PageHero from '../../../components/PageHero.astro';
+import SectionHead from '../../../components/SectionHead.astro';
+import VideoPlayer from '../../../components/VideoPlayer.astro';
+import { locales, useT, type Locale } from '../../../i18n/ui';
+import { videos, galleryPhotos } from '../../../data/videos';
+import { site } from '../../../data/site';
+import { photo } from '../../../lib/media';
+
+export const getStaticPaths = () => locales.map((lang) => ({ params: { lang } }));
+const lang = Astro.params.lang as Locale;
+const t = useT(lang);
+const [explains, ...rest] = [...videos.filter((v) => v.series === 'explains'), ...videos.filter((v) => !v.series)];
+---
+<Base lang={lang} title={t('gallery.title')} description={t('gallery.lead')} image={photo('expocruz-presente')}>
+  <PageHero eyebrow={t('gallery.eyebrow')} title={t('gallery.title')} lead={t('gallery.lead')} />
+
+  <section class="container-x grid items-center gap-12 pb-24 lg:grid-cols-[1fr_0.6fr] lg:gap-20">
+    <SectionHead eyebrow={t('gallery.explains')} title={explains.title[lang]} lead={t('about.philosophy.body')} />
+    <VideoPlayer id={explains.id} title={explains.title[lang]} credit={explains.credit} class="mx-auto w-full max-w-sm" />
+  </section>
+
+  <section class="bg-bone/60 py-24">
+    <div class="container-x">
+      <SectionHead title={t('gallery.videos')} />
+      <div class="mt-12 grid grid-cols-2 gap-x-5 gap-y-10 md:grid-cols-3 lg:grid-cols-4">
+        {rest.map((v) => <VideoPlayer id={v.id} title={v.title[lang]} credit={v.credit} />)}
+      </div>
+    </div>
+  </section>
+
+  <section class="container-x py-24">
+    <SectionHead title={t('gallery.photos')} />
+    <div class="mt-12 columns-2 gap-5 md:columns-3 [&>*]:mb-5">
+      {galleryPhotos.map((p) => (
+        <figure data-reveal class="break-inside-avoid overflow-hidden rounded-2xl">
+          <Image src={photo(p.id)} alt={p.alt[lang]} widths={[400, 700, 1000]} sizes="(min-width:768px) 33vw, 50vw" class="w-full" />
+        </figure>
+      ))}
+    </div>
+    <p class="mt-10 text-center"><a href={site.instagram} target="_blank" rel="noopener" class="inline-flex rounded-full border border-ink/25 px-6 py-3 text-sm font-semibold hover:bg-ink hover:text-cream transition-colors">{t('gallery.follow')} · @haciendasurucu</a></p>
+  </section>
+</Base>

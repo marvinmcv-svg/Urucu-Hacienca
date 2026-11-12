@@ -1,0 +1,24 @@
+---
+import { Image } from 'astro:assets';
+import type { Animal } from '../data/animals';
+import { breeds } from '../data/site';
+import { photo, posterSrc } from '../lib/media';
+import { href, useT, type Locale } from '../i18n/ui';
+interface Props { a: Animal; lang: Locale; level?: 'h2' | 'h3' }
+const { a, lang, level: H = 'h3' } = Astro.props;
+const t = useT(lang);
+const breed = breeds.find((b) => b.id === a.breed)!.name[lang];
+---
+<article data-breed={a.breed} data-reveal class="group relative">
+  <div class="relative aspect-[4/5] overflow-hidden rounded-2xl bg-bone">
+    {a.photo
+      ? <Image src={photo(a.photo)} alt={a.name} widths={[400, 640, 900]} sizes="(min-width:1024px) 25vw, (min-width:640px) 50vw, 100vw" class="size-full object-cover transition-transform duration-700 group-hover:scale-105" />
+      : <img src={posterSrc(a.video!)} alt={a.name} loading="lazy" decoding="async" class="size-full object-cover transition-transform duration-700 group-hover:scale-105" />}
+    {a.awards?.length && <span class="absolute left-3 top-3 rounded-full bg-gold px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-ink">★ {a.awards[0][lang].split(/[·,]/)[0].trim()}</span>}
+  </div>
+  <p class="mt-4 text-xs font-semibold uppercase tracking-[0.16em] text-copper">{breed} · {t(`role.${a.role}`)}</p>
+  <H class="mt-1.5 font-display text-xl leading-snug">
+    <a href={href(lang, `plantel/${a.slug}/`)} class="after:absolute after:inset-0 hover:text-copper">{a.name}</a>
+  </H>
+  <p class="mt-1 text-sm text-ink-soft">{a.pedigree}</p>
+</article>

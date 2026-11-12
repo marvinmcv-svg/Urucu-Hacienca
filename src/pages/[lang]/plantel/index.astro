@@ -1,0 +1,63 @@
+---
+import Base from '../../../layouts/Base.astro';
+import PageHero from '../../../components/PageHero.astro';
+import AnimalCard from '../../../components/AnimalCard.astro';
+import SectionHead from '../../../components/SectionHead.astro';
+import { Image } from 'astro:assets';
+import { locales, useT, type Locale } from '../../../i18n/ui';
+import { animals } from '../../../data/animals';
+import { breeds, awards2026 } from '../../../data/site';
+import { photo } from '../../../lib/media';
+
+export const getStaticPaths = () => locales.map((lang) => ({ params: { lang } }));
+const lang = Astro.params.lang as Locale;
+const t = useT(lang);
+const present = breeds.filter((b) => animals.some((a) => a.breed === b.id));
+---
+<Base lang={lang} title={t('herd.title')} description={t('herd.lead')} image={photo('gran-campeona-ternera')}>
+  <PageHero eyebrow={t('herd.eyebrow')} title={t('herd.title')} lead={t('herd.lead')} />
+
+  <section class="container-x pb-24 lg:pb-32">
+    <div role="group" aria-label={t('herd.filter.label')} class="flex flex-wrap gap-2" id="herd-filter">
+      <button type="button" data-filter="all" aria-pressed="true" class="filter-btn">{t('herd.filter.all')}</button>
+      {present.map((b) => <button type="button" data-filter={b.id} aria-pressed="false" class="filter-btn">{b.name[lang]}</button>)}
+    </div>
+    <div id="herd-grid" class="mt-12 grid gap-x-6 gap-y-14 sm:grid-cols-2 lg:grid-cols-4">
+      {animals.map((a) => <AnimalCard a={a} lang={lang} level="h2" />)}
+    </div>
+  </section>
+
+  <section class="bg-ink text-cream">
+    <div class="container-x grid gap-12 py-24 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20 lg:py-32">
+      <div data-reveal class="overflow-hidden rounded-2xl">
+        <Image src={photo('fexposiv-podio')} alt="FexpoSIV 2026" widths={[600, 900, 1300]} sizes="(min-width:1024px) 45vw, 100vw" class="size-full object-cover" />
+      </div>
+      <div>
+        <SectionHead tone="cream" eyebrow="★" title={t('herd.awards.title')} />
+        {awards2026.map((g) => (
+          <div data-reveal class="mt-10">
+            <h3 class="eyebrow text-[#e9c27e]!">{g.event}</h3>
+            <ul class="mt-4 divide-y divide-cream/10 border-y border-cream/10">
+              {g.items.map((i) => <li class="py-3 text-cream/90">{i[lang]}</li>)}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style is:global>
+  .filter-btn { border-radius: 9999px; border: 1px solid color-mix(in srgb, var(--color-ink) 20%, transparent); padding: .55rem 1.1rem; font-size: .875rem; font-weight: 600; transition: all .2s; }
+  .filter-btn:hover { border-color: var(--color-ink); }
+  .filter-btn[aria-pressed="true"] { background: var(--color-ink); color: var(--color-cream); border-color: var(--color-ink); }
+</style>
+<script>
+  const btns = document.querySelectorAll<HTMLButtonElement>('#herd-filter [data-filter]');
+  const cards = document.querySelectorAll<HTMLElement>('#herd-grid [data-breed]');
+  btns.forEach((b) => b.addEventListener('click', () => {
+    const f = b.dataset.filter!;
+    btns.forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    cards.forEach((c) => { c.hidden = f !== 'all' && c.dataset.breed !== f; });
+  }));
+</script>

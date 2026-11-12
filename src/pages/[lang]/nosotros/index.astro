@@ -1,0 +1,55 @@
+---
+import Base from '../../../layouts/Base.astro';
+import PageHero from '../../../components/PageHero.astro';
+import SectionHead from '../../../components/SectionHead.astro';
+import VideoPlayer from '../../../components/VideoPlayer.astro';
+import WaButton from '../../../components/WaButton.astro';
+import { locales, useT, type Locale } from '../../../i18n/ui';
+import { partners } from '../../../data/site';
+import { photo } from '../../../lib/media';
+
+export const getStaticPaths = () => locales.map((lang) => ({ params: { lang } }));
+const lang = Astro.params.lang as Locale;
+const t = useT(lang);
+const values = [1, 2, 3, 4] as const;
+---
+<Base lang={lang} title={t('about.eyebrow')} description={t('about.lead')} image={photo('campo-futuro')}>
+  <PageHero eyebrow={t('about.eyebrow')} title={t('about.title')} lead={t('about.lead')} image="campo-futuro" position="50% 65%" />
+
+  <section class="container-x grid gap-12 py-24 lg:grid-cols-2 lg:gap-20 lg:py-32">
+    <SectionHead eyebrow={t('meta.tagline')} title={t('about.story.title')} lead={t('about.story.body')} />
+    <ul class="grid gap-px overflow-hidden rounded-2xl bg-ink/10 sm:grid-cols-2">
+      {values.map((n) => (
+        <li data-reveal class="bg-cream p-7">
+          <p class="font-display text-copper text-sm">0{n}</p>
+          <h3 class="mt-2 text-xl">{t(`about.values.${n}`)}</h3>
+          <p class="mt-2 text-sm leading-relaxed text-ink-soft">{t(`about.values.${n}d`)}</p>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <section class="bg-bone/60 py-24 lg:py-32">
+    <div class="container-x grid items-center gap-12 lg:grid-cols-[0.7fr_1fr] lg:gap-20">
+      <VideoPlayer id="pasturas-pesqueria" title={t('about.pesqueria.title')} credit="@gramaseed.srl" class="mx-auto w-full max-w-sm" />
+      <div>
+        <SectionHead eyebrow="San Matías · Santa Cruz" title={t('about.pesqueria.title')} lead={t('about.pesqueria.body')} />
+        <div data-reveal class="mt-9"><WaButton intent="visit" lang={lang}>{t('cta.visit')}</WaButton></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="container-x grid items-center gap-12 py-24 lg:grid-cols-[1fr_0.7fr] lg:gap-20 lg:py-32">
+    <SectionHead eyebrow={t('gallery.explains')} title={t('about.philosophy.title')} lead={t('about.philosophy.body')} />
+    <VideoPlayer id="rusticidad-explica" title={`${t('gallery.explains')}: ${t('about.values.1')}`} class="mx-auto w-full max-w-sm" />
+  </section>
+
+  <section class="border-t border-ink/10">
+    <div class="container-x grid gap-10 py-20 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
+      <SectionHead title={t('about.partners.title')} lead={t('about.partners.body')} />
+      <ul class="flex flex-wrap gap-3">
+        {partners.map((p) => <li data-reveal class="rounded-full border border-ink/15 px-5 py-2.5 font-display text-lg">{p}</li>)}
+      </ul>
+    </div>
+  </section>
+</Base>

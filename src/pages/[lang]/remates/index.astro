@@ -1,0 +1,66 @@
+---
+import Base from '../../../layouts/Base.astro';
+import PageHero from '../../../components/PageHero.astro';
+import SectionHead from '../../../components/SectionHead.astro';
+import WaButton from '../../../components/WaButton.astro';
+import { locales, href, useT, type Locale } from '../../../i18n/ui';
+import { upcoming, past } from '../../../data/events';
+import { site } from '../../../data/site';
+import { posterSrc, videoSrc } from '../../../lib/media';
+
+export const getStaticPaths = () => locales.map((lang) => ({ params: { lang } }));
+const lang = Astro.params.lang as Locale;
+const t = useT(lang);
+const next = upcoming();
+const recent = past();
+const date = (iso: string) => new Date(iso).toLocaleDateString(lang, { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/La_Paz' });
+const time = (iso: string) => new Date(iso).toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit', timeZone: 'America/La_Paz' });
+const eventLd = [...next, ...recent].filter((e) => e.kind === 'auction').map((e) => ({
+  '@context': 'https://schema.org', '@type': 'Event', name: e.name, startDate: e.date,
+  eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode', eventStatus: 'https://schema.org/EventScheduled',
+  location: { '@type': 'Place', name: e.venue, address: { '@type': 'PostalAddress', addressLocality: 'Santa Cruz de la Sierra', addressCountry: 'BO' } },
+  organizer: { '@type': 'Organization', name: 'Haciendas Urucú', url: new URL(`/${lang}/`, Astro.site).href },
+}));
+---
+<Base lang={lang} title={t('auctions.title')} description={t('auctions.lead')} jsonLd={eventLd}>
+  <PageHero eyebrow={t('auctions.eyebrow')} title={t('auctions.title')} lead={t('auctions.lead')} />
+
+  <section class="container-x">
+    <div data-reveal class="grid gap-8 rounded-3xl bg-ink p-8 text-cream sm:p-12 lg:grid-cols-[1fr_auto] lg:items-center">
+      <div>
+        <p class="eyebrow text-[#e9b58f]!">{t('auctions.next')}</p>
+        {next.length
+          ? next.map((e) => <h2 class="mt-3 text-3xl sm:text-4xl">{e.name}</h2><p class="mt-3 text-cream/80">{date(e.date)} · {time(e.date)} · {e.venue}</p>)
+          : <p class="mt-3 max-w-xl font-display text-2xl leading-snug sm:text-3xl">{t('auctions.next_tbd')}</p>}
+        <p class="mt-4 text-sm text-cream/60">{site.auctionVenue}</p>
+      </div>
+      <WaButton intent="lot" lang={lang} vars={{ lot: next[0]?.name ?? (lang === 'en' ? 'your next auction' : lang === 'pt' ? 'o próximo leilão' : 'el próximo remate') }} class="bg-wa! text-ink!">{t('cta.notify_auction')}</WaButton>
+    </div>
+  </section>
+
+  <section class="container-x py-24 lg:py-32">
+    <SectionHead title={t('auctions.past')} />
+    <ol class="mt-12 divide-y divide-ink/10 border-y border-ink/10">
+      {recent.map((e) => (
+        <li data-reveal class="grid gap-6 py-8 md:grid-cols-[10rem_1fr_auto] md:items-center">
+          <p class="text-sm font-semibold uppercase tracking-wider text-copper">{date(e.date)}</p>
+          <div>
+            <h3 class="text-2xl">{e.name}</h3>
+            <p class="mt-1 text-sm text-ink-soft">{e.venue}{e.kind === 'show' ? ' · Expo' : ''}</p>
+            {e.note && <p class="mt-2 text-ink-soft">{e.note[lang]}</p>}
+            {e.lots?.map((l) => (
+              <p class="mt-2">{l.lot && <span class="mr-2 rounded-full bg-bone px-2.5 py-0.5 text-xs font-semibold">{t('auctions.lot')} {l.lot}</span>}
+                {l.slug ? <a class="font-medium underline decoration-copper/40 underline-offset-4 hover:text-copper" href={href(lang, `plantel/${l.slug}/`)}>{l.animal}</a> : l.animal}</p>
+            ))}
+          </div>
+          {e.video && (
+            <a href={videoSrc(e.video)} target="_blank" rel="noopener" class="group relative block w-28 overflow-hidden rounded-xl" aria-label={`${t('video.play')}: ${e.name}`}>
+              <img src={posterSrc(e.video)} alt="" loading="lazy" class="aspect-[3/4] w-full object-cover transition-transform group-hover:scale-105" />
+              <span aria-hidden="true" class="absolute inset-0 grid place-items-center bg-ink/25 text-2xl text-cream">▶</span>
+            </a>
+          )}
+        </li>
+      ))}
+    </ol>
+  </section>
+</Base>

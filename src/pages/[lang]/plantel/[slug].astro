@@ -1,0 +1,54 @@
+---
+import { Image } from 'astro:assets';
+import Base from '../../../layouts/Base.astro';
+import WaButton from '../../../components/WaButton.astro';
+import VideoPlayer from '../../../components/VideoPlayer.astro';
+import AnimalCard from '../../../components/AnimalCard.astro';
+import { locales, href, useT, type Locale } from '../../../i18n/ui';
+import { animals, type Animal } from '../../../data/animals';
+import { breeds } from '../../../data/site';
+import { photo } from '../../../lib/media';
+
+export const getStaticPaths = () => locales.flatMap((lang) => animals.map((a) => ({ params: { lang, slug: a.slug }, props: { a } })));
+const lang = Astro.params.lang as Locale;
+const { a } = Astro.props as { a: Animal };
+const t = useT(lang);
+const breed = breeds.find((b) => b.id === a.breed)!.name[lang];
+const born = a.born && new Date(`${a.born}T12:00:00`).toLocaleDateString(lang, { day: 'numeric', month: 'long', year: 'numeric' });
+const more = animals.filter((x) => x.slug !== a.slug && x.breed === a.breed).slice(0, 4);
+---
+<Base lang={lang} title={a.name} description={a.text[lang]} image={a.photo ? photo(a.photo) : undefined}>
+  <article class="container-x grid gap-12 pb-24 pt-12 lg:grid-cols-[1fr_1fr] lg:gap-20 lg:pb-32 lg:pt-16">
+    <div class="grid content-start gap-6">
+      {a.photo && (
+        <div class="overflow-hidden rounded-2xl">
+          <Image src={photo(a.photo)} alt={a.name} widths={[600, 900, 1300]} sizes="(min-width:1024px) 50vw, 100vw" loading="eager" fetchpriority="high" class="w-full object-cover" />
+        </div>
+      )}
+      {a.video && <VideoPlayer id={a.video} title={a.name} credit={a.credit} class:list={[a.photo ? 'max-w-xs' : 'mx-auto w-full max-w-md']} />}
+    </div>
+    <div class="lg:sticky lg:top-28 lg:self-start">
+      <a href={href(lang, 'herd')} class="text-sm font-semibold text-copper hover:text-copper-dark">← {t('herd.back')}</a>
+      <p class="eyebrow mt-8">{breed} · {t(`role.${a.role}`)} · {t(`sex.${a.sex}`)}</p>
+      <h1 class="mt-3 text-4xl leading-[1.05] sm:text-5xl lg:text-6xl">{a.name}</h1>
+      {a.rgn && <p class="mt-2 text-ink-soft">RGN {a.rgn}</p>}
+      <p class="mt-6 text-lg leading-relaxed text-ink-soft">{a.text[lang]}</p>
+      <dl class="mt-10 divide-y divide-ink/10 border-y border-ink/10">
+        <div class="grid grid-cols-[9rem_1fr] gap-4 py-4"><dt class="text-sm text-ink-soft">{t('herd.pedigree')}</dt><dd>{a.pedigree}</dd></div>
+        {born && <div class="grid grid-cols-[9rem_1fr] gap-4 py-4"><dt class="text-sm text-ink-soft">{t('herd.born')}</dt><dd>{born}</dd></div>}
+        {a.status && <div class="grid grid-cols-[9rem_1fr] gap-4 py-4"><dt class="text-sm text-ink-soft">{t('herd.status')}</dt><dd>{a.status[lang]}</dd></div>}
+        {a.awards?.length && <div class="grid grid-cols-[9rem_1fr] gap-4 py-4"><dt class="text-sm text-ink-soft">{t('herd.awards')}</dt>
+          <dd><ul class="grid gap-1.5">{a.awards.map((w) => <li><span class="text-gold">★</span> {w[lang]}</li>)}</ul></dd></div>}
+      </dl>
+      <WaButton intent="animal" lang={lang} vars={{ animal: a.rgn ? `${a.name} (${a.rgn})` : a.name }} class="mt-10">{t('cta.ask_animal')}</WaButton>
+    </div>
+  </article>
+  {more.length > 0 && (
+    <section class="bg-bone/60 py-20">
+      <div class="container-x">
+        <h2 class="text-3xl">{t('home.featured.title')}</h2>
+        <div class="mt-10 grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">{more.map((x) => <AnimalCard a={x} lang={lang} />)}</div>
+      </div>
+    </section>
+  )}
+</Base>
