@@ -9,8 +9,8 @@ import { site } from '../data/site';
 import ogDefault from '../assets/photos/expocruz-presente.jpg';
 import { getImage } from 'astro:assets';
 
-interface Props { lang: Locale; title?: string; description?: string; image?: ImageMetadata; band?: boolean; jsonLd?: object[] }
-const { lang, title, description, image = ogDefault, band = true, jsonLd = [] } = Astro.props;
+interface Props { lang: Locale; title?: string; description?: string; image?: ImageMetadata; band?: boolean; jsonLd?: object[]; overlay?: boolean }
+const { lang, title, description, image = ogDefault, band = true, jsonLd = [], overlay = false } = Astro.props;
 const t = useT(lang);
 const fullTitle = title ? `${title} · Haciendas Urucú` : `Haciendas Urucú · ${t('meta.tagline')}`;
 const desc = description ?? t('meta.description');
@@ -44,7 +44,7 @@ const org = {
     {locales.map((l) => <link rel="alternate" hreflang={htmlLang[l]} href={abs(altPaths[l])} />)}
     <link rel="alternate" hreflang="x-default" href={abs(altPaths.es)} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <meta name="theme-color" content="#2a1c13" />
+    <meta name="theme-color" content="#141c17" />
     <slot name="head" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Haciendas Urucú" />
@@ -57,8 +57,8 @@ const org = {
     <script is:inline>document.documentElement.classList.add('js')</script>
   </head>
   <body class="min-h-dvh flex flex-col">
-    <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[60] rounded bg-ink px-4 py-2 text-cream">Skip to content</a>
-    <Header lang={lang} altPaths={altPaths} />
+    <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[60] bg-ink px-4 py-2 text-paper">Skip to content</a>
+    <Header lang={lang} altPaths={altPaths} overlay={overlay} />
     <main id="main" class="flex-1"><slot /></main>
     {band && <CTABand lang={lang} />}
     <Footer lang={lang} />
@@ -66,10 +66,6 @@ const org = {
     <script>
       import { inject } from '@vercel/analytics';
       inject();
-      const io = new IntersectionObserver((entries) => {
-        for (const e of entries) if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); }
-      }, { rootMargin: '0px 0px -8% 0px' });
-      document.querySelectorAll('[data-reveal]').forEach((el) => io.observe(el));
     </script>
   </body>
 </html>

@@ -1,16 +1,33 @@
 ---
-interface Props { id: string; title: string; credit?: string; class?: string; landscape?: boolean }
+import Icon from './Icon.astro';
+interface Props { id: string; title: string; credit?: string; class?: string; landscape?: boolean; tone?: 'paper' | 'ink' }
 import { videoSrc, posterSrc, isLandscape } from '../lib/media';
-const { id, title, credit, class: cls = '', landscape = isLandscape(Astro.props.id) } = Astro.props;
+const { id, title, credit, class: cls = '', landscape = isLandscape(Astro.props.id), tone = 'paper' } = Astro.props;
 ---
 <figure class:list={['group', cls]}>
-  <div class:list={['relative overflow-hidden rounded-2xl bg-ink', landscape ? 'aspect-video' : 'aspect-[9/16]']}>
-    <video class="absolute inset-0 size-full object-cover" controls playsinline preload="none" poster={posterSrc(id)} aria-label={title}>
+  <div class:list={['video-shell relative overflow-hidden rounded-[2px] bg-ink', landscape ? 'aspect-video' : 'aspect-[9/16]']}>
+    <video class="absolute inset-0 size-full object-cover" playsinline preload="none" poster={posterSrc(id)} aria-label={title}>
       <source src={videoSrc(id)} type="video/mp4" />
     </video>
+    <button type="button" class="video-play absolute inset-0 grid place-items-center bg-[linear-gradient(to_top,rgb(20_28_23/0.55),transparent_55%)] text-paper" aria-label={title}>
+      <span class="grid size-16 place-items-center rounded-full bg-paper/95 text-ink shadow-[0_8px_24px_rgb(0_0_0/0.25)] transition-transform duration-500 ease-[var(--ease-out-expo)] group-hover:scale-110">
+        <Icon name="play" class="ml-1 size-6" />
+      </span>
+    </button>
   </div>
-  <figcaption class="mt-3 text-sm text-ink-soft">
-    <span class="text-ink font-medium">{title}</span>
-    {credit && <span class="block text-xs mt-0.5">🎥 {credit}</span>}
+  <figcaption class:list={['mt-3 flex items-baseline justify-between gap-4 text-sm', tone === 'ink' ? 'text-paper/65' : 'text-ink-soft']}>
+    <span class:list={['font-medium', tone === 'ink' ? 'text-paper' : 'text-ink']}>{title}</span>
+    {credit && <span class="shrink-0 text-xs">{credit}</span>}
   </figcaption>
 </figure>
+<script>
+  // Custom play overlay; once started the native controls take over.
+  document.querySelectorAll<HTMLButtonElement>('.video-play').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const v = btn.parentElement!.querySelector('video')!;
+      v.controls = true;
+      btn.remove();
+      v.play();
+    });
+  });
+</script>

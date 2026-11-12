@@ -1,0 +1,16 @@
+---
+import Icon from './Icon.astro';
+interface Props { href: string; variant?: 'ghost' | 'light' | 'achiote'; size?: 'md' | 'sm'; class?: string; external?: boolean }
+const { href, variant = 'ghost', size = 'md', class: cls = '', external = false } = Astro.props;
+const styles = {
+  ghost: 'border border-ink/30 text-ink hover:border-ink hover:bg-ink hover:text-paper',
+  light: 'border border-paper/40 text-paper hover:bg-paper hover:text-ink',
+  achiote: 'bg-achiote text-paper hover:bg-achiote-deep',
+};
+---
+<a href={href} {...(external ? { target: '_blank', rel: 'noopener' } : {})}
+  class:list={['group/btn inline-flex items-center justify-center gap-3 rounded-[3px] font-semibold transition-colors duration-200',
+    size === 'md' ? 'min-h-13 px-6 text-[0.9375rem]' : 'min-h-11 px-5 text-sm', styles[variant], cls]}>
+  <slot />
+  <Icon name="arrow" class="size-4 transition-transform duration-300 ease-out group-hover/btn:translate-x-1" />
+</a>

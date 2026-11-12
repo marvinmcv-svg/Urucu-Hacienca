@@ -13,42 +13,41 @@ const lang = Astro.params.lang as Locale;
 const t = useT(lang);
 const values = [1, 2, 3, 4] as const;
 ---
-<Base lang={lang} title={t('about.eyebrow')} description={t('about.lead')} image={photo('campo-futuro')}>
-  <PageHero eyebrow={t('about.eyebrow')} title={t('about.title')} lead={t('about.lead')} image="campo-futuro" position="50% 65%" />
+<Base lang={lang} title={t('about.eyebrow')} description={t('about.lead')} image={photo('campo-futuro')} overlay>
+  <PageHero label={t('about.eyebrow')} title={t('about.title')} lead={t('about.lead')} image="campo-futuro" position="50% 65%" />
 
-  <section class="container-x grid gap-12 py-24 lg:grid-cols-2 lg:gap-20 lg:py-32">
-    <SectionHead eyebrow={t('meta.tagline')} title={t('about.story.title')} lead={t('about.story.body')} />
-    <ul class="grid gap-px overflow-hidden rounded-2xl bg-ink/10 sm:grid-cols-2">
+  <section class="container-x grid gap-16 py-24 lg:grid-cols-2 lg:gap-24 lg:py-36">
+    <SectionHead title={t('about.story.title')} lead={t('about.story.body')} />
+    <dl class="border-t border-ink/25 lg:mt-3">
       {values.map((n) => (
-        <li data-reveal class="bg-cream p-7">
-          <p class="font-display text-copper text-sm">0{n}</p>
-          <h3 class="mt-2 text-xl">{t(`about.values.${n}`)}</h3>
-          <p class="mt-2 text-sm leading-relaxed text-ink-soft">{t(`about.values.${n}d`)}</p>
-        </li>
+        <div class="grid gap-2 border-b border-ink/15 py-6 sm:grid-cols-[12rem_1fr] sm:gap-8">
+          <dt class="font-display text-2xl italic leading-tight">{t(`about.values.${n}`)}</dt>
+          <dd class="leading-relaxed text-ink-soft">{t(`about.values.${n}d`)}</dd>
+        </div>
       ))}
-    </ul>
+    </dl>
   </section>
 
-  <section class="bg-bone/60 py-24 lg:py-32">
-    <div class="container-x grid items-center gap-12 lg:grid-cols-[0.7fr_1fr] lg:gap-20">
-      <VideoPlayer id="pasturas-pesqueria" title={t('about.pesqueria.title')} credit="@gramaseed.srl" class="mx-auto w-full max-w-sm" />
+  <section class="on-ink bg-ink py-24 text-paper lg:py-36">
+    <div class="container-x grid items-center gap-14 lg:grid-cols-[minmax(0,24rem)_1fr] lg:gap-24">
+      <VideoPlayer id="pasturas-pesqueria" title={t('about.pesqueria.title')} credit="@gramaseed.srl" tone="ink" class="mx-auto w-full max-w-sm" />
       <div>
-        <SectionHead eyebrow="San Matías · Santa Cruz" title={t('about.pesqueria.title')} lead={t('about.pesqueria.body')} />
-        <div data-reveal class="mt-9"><WaButton intent="visit" lang={lang}>{t('cta.visit')}</WaButton></div>
+        <SectionHead tone="paper" title={t('about.pesqueria.title')} lead={t('about.pesqueria.body')} meta="San Matías · Santa Cruz" />
+        <div class="mt-10"><WaButton intent="visit" lang={lang}>{t('cta.visit')}</WaButton></div>
       </div>
     </div>
   </section>
 
-  <section class="container-x grid items-center gap-12 py-24 lg:grid-cols-[1fr_0.7fr] lg:gap-20 lg:py-32">
-    <SectionHead eyebrow={t('gallery.explains')} title={t('about.philosophy.title')} lead={t('about.philosophy.body')} />
+  <section class="container-x grid items-center gap-14 py-24 lg:grid-cols-[1fr_minmax(0,24rem)] lg:gap-24 lg:py-36">
+    <SectionHead title={t('about.philosophy.title')} lead={t('about.philosophy.body')} meta={t('gallery.explains')} />
     <VideoPlayer id="rusticidad-explica" title={`${t('gallery.explains')}: ${t('about.values.1')}`} class="mx-auto w-full max-w-sm" />
   </section>
 
-  <section class="border-t border-ink/10">
-    <div class="container-x grid gap-10 py-20 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
-      <SectionHead title={t('about.partners.title')} lead={t('about.partners.body')} />
-      <ul class="flex flex-wrap gap-3">
-        {partners.map((p) => <li data-reveal class="rounded-full border border-ink/15 px-5 py-2.5 font-display text-lg">{p}</li>)}
+  <section class="border-t border-ink/15 bg-paper-deep/50">
+    <div class="container-x grid gap-12 py-20 lg:grid-cols-[0.8fr_1.2fr] lg:gap-24 lg:py-28">
+      <SectionHead title={t('about.partners.title')} lead={t('about.partners.body')} size="md" />
+      <ul class="self-center border-t border-ink/25">
+        {partners.map((p) => <li class="border-b border-ink/15 py-4 font-display text-3xl leading-tight lg:text-4xl">{p}</li>)}
       </ul>
     </div>
   </section>

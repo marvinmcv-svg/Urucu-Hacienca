@@ -1,5 +1,6 @@
 ---
 import Logo from './Logo.astro';
+import Icon from './Icon.astro';
 import { href, useT, type Locale, type RouteKey } from '../i18n/ui';
 import { site } from '../data/site';
 import { waLink } from '../lib/wa';
@@ -8,26 +9,27 @@ const { lang } = Astro.props;
 const t = useT(lang);
 const links: [RouteKey, Parameters<typeof t>[0]][] = [['about', 'nav.about'], ['genetics', 'nav.genetics'], ['herd', 'nav.herd'], ['auctions', 'nav.auctions'], ['gallery', 'nav.gallery'], ['contact', 'nav.contact']];
 ---
-<footer class="bg-ink text-cream/75">
-  <div class="container-x grid gap-12 py-16 md:grid-cols-[1.4fr_1fr_1fr]">
-    <div>
-      <Logo tone="cream" class="text-[18px]" />
-      <p class="mt-6 max-w-xs text-sm leading-relaxed">{t('meta.tagline')}. {t('home.hero.title')}.</p>
+<footer class="on-ink bg-ink text-paper/75">
+  <div class="container-x grid gap-12 pb-12 pt-20 md:grid-cols-[1.5fr_1fr_1fr] lg:pt-24">
+    <div class="text-paper">
+      <Logo class="text-[19px]" />
+      <p class="mt-8 max-w-sm font-display text-2xl leading-snug text-paper/90"><em>{t('meta.tagline')}.</em> {t('home.hero.title')}.</p>
     </div>
     <nav aria-label="Footer">
-      <ul class="grid gap-2.5 text-sm">{links.map(([r, k]) => <li><a class="hover:text-cream" href={href(lang, r)}>{t(k)}</a></li>)}</ul>
+      <ul class="grid gap-1 text-[0.9375rem]">{links.map(([r, k]) => <li><a class="inline-block py-1.5 hover:text-paper" href={href(lang, r)}>{t(k)}</a></li>)}</ul>
     </nav>
-    <div class="text-sm grid gap-2.5 content-start">
-      <a class="hover:text-cream" href={waLink('general', lang)} target="_blank" rel="noopener" data-wa-intent="general">WhatsApp {site.phoneDisplay}</a>
-      <a class="hover:text-cream" href={site.instagram} target="_blank" rel="noopener">Instagram @haciendasurucu</a>
-      <a class="hover:text-cream" href={site.facebook} target="_blank" rel="noopener">Facebook</a>
-      <p class="mt-2">{site.location.ranch}<br />{site.location.area}</p>
+    <div class="grid content-start gap-1 text-[0.9375rem]">
+      <a class="inline-flex items-center gap-2.5 py-1.5 hover:text-paper" href={waLink('general', lang)} target="_blank" rel="noopener" data-wa-intent="general"><Icon name="whatsapp" class="size-4 text-wa" /><span class="num">{site.phoneDisplay}</span></a>
+      <a class="py-1.5 hover:text-paper" href={site.instagram} target="_blank" rel="noopener">Instagram · @haciendasurucu</a>
+      <a class="py-1.5 hover:text-paper" href={site.facebook} target="_blank" rel="noopener">Facebook</a>
+      <p class="mt-4 flex gap-2.5"><Icon name="pin" class="mt-1 size-4 text-dust" /><span>{site.location.ranch}<br />{site.location.area}</span></p>
     </div>
   </div>
-  <div class="border-t border-cream/10">
-    <div class="container-x flex flex-col gap-2 py-6 text-xs sm:flex-row sm:justify-between">
-      <p>© {new Date().getFullYear()} Haciendas Urucú. {t('footer.rights')}</p>
-      <p>{t('footer.credits')}</p>
-    </div>
+  <div class="container-x">
+    <p aria-hidden="true" class="select-none overflow-hidden border-t border-paper/15 pt-6 font-display text-[clamp(4rem,17vw,15.5rem)] font-semibold leading-[0.8] tracking-[-0.02em] text-paper/[0.07]">URUCÚ</p>
+  </div>
+  <div class="container-x flex flex-col gap-2 pb-28 pt-6 text-sm text-paper/60 sm:flex-row sm:justify-between sm:pb-8">
+    <p>© {new Date().getFullYear()} Haciendas Urucú. {t('footer.rights')}</p>
+    <p>{t('footer.credits')}</p>
   </div>
 </footer>
