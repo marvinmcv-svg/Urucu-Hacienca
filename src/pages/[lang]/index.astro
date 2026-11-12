@@ -5,11 +5,11 @@ import SectionHead from '../../components/SectionHead.astro';
 import WaButton from '../../components/WaButton.astro';
 import LinkButton from '../../components/LinkButton.astro';
 import AnimalCard from '../../components/AnimalCard.astro';
-import VideoPlayer from '../../components/VideoPlayer.astro';
 import Icon from '../../components/Icon.astro';
+import CinemaHero from '../../components/CinemaHero.astro';
 import { locales, href, useT, type Locale } from '../../i18n/ui';
 import { animals } from '../../data/animals';
-import { breeds, aiTotal, site } from '../../data/site';
+import { site } from '../../data/site';
 import { upcoming } from '../../data/events';
 import { photo } from '../../lib/media';
 
@@ -18,78 +18,11 @@ const lang = Astro.params.lang as Locale;
 const t = useT(lang);
 const featured = animals.filter((a) => a.featured);
 const next = upcoming()[0];
-const fmt = (n: number) => n.toLocaleString(lang, { maximumFractionDigits: 2 });
-const words = t('home.hero.title').split(' ');
 ---
 <Base lang={lang} overlay>
-  <link slot="head" rel="preload" as="image" href="/media/poster/hero.jpg" fetchpriority="high" />
+  <link slot="head" rel="preload" as="image" href="/media/film/gate.jpg" fetchpriority="high" />
 
-  <!-- Hero: full-bleed, cinematic -->
-  <section data-hide-dock class="on-ink relative isolate flex min-h-[100svh] flex-col justify-end overflow-hidden bg-ink text-paper">
-    <video class="absolute inset-0 -z-10 size-full object-cover" autoplay muted loop playsinline preload="metadata" poster="/media/poster/hero.jpg" aria-hidden="true">
-      <source src="/media/video/hero.mp4" type="video/mp4" />
-    </video>
-    <div class="absolute inset-0 -z-10 bg-[linear-gradient(to_top,rgb(20_28_23/0.95)_0%,rgb(20_28_23/0.55)_45%,rgb(20_28_23/0.15)_75%)]"></div>
-    <div class="container-x pb-12 pt-32 sm:pb-14 lg:pb-16">
-      <h1 class="max-w-[14ch] text-[3.25rem] leading-[0.95] tracking-[-0.025em] sm:text-7xl lg:text-[7.25rem] xl:text-[8.25rem]" aria-label={t('home.hero.title')}>
-        {words.map((w, i) => <span aria-hidden="true" class="hero-word"><span style={`animation-delay:${i * 70}ms`}>{w}</span></span>)}
-      </h1>
-      <div class="hero-fade mt-10 grid gap-8 border-t border-paper/25 pt-7 lg:mt-14 lg:grid-cols-[1fr_minmax(0,34rem)] lg:gap-16">
-        <div class="hidden lg:block">
-          <p class="label text-dust">{t('home.hero.eyebrow')} · {t('meta.tagline')}</p>
-          <p class="mt-3 font-display text-xl italic text-paper/80">Nelore · Nelore Mocho · Sindi</p>
-        </div>
-        <div>
-          <p class="text-lg leading-relaxed text-paper/88">{t('home.hero.lead')}</p>
-          <div class="mt-8 flex flex-col gap-3 sm:flex-row">
-            <WaButton intent="general" lang={lang}>{t('cta.talk')}</WaButton>
-            <LinkButton href={href(lang, 'herd')} variant="light">{t('cta.herd')}</LinkButton>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Proof: the record, set like a results table -->
-  <section aria-label={t('home.proof.title')} class="border-b border-ink/15">
-    <dl class="container-x grid sm:grid-cols-3">
-      <div class="flex flex-col-reverse justify-start gap-3 border-b border-ink/15 py-10 sm:border-b-0 sm:border-r sm:py-14 sm:pr-8">
-        <dt class="text-[0.9375rem] text-ink-soft">{t('home.proof.pregnancy')}<span class="block text-sm">{t('home.proof.pregnancy_sub')}</span></dt>
-        <dd class="num font-display text-6xl leading-none text-achiote lg:text-[5.5rem]">{fmt(aiTotal)}<span class="text-[0.55em]">%</span></dd>
-      </div>
-      <div class="flex flex-col-reverse justify-start gap-3 border-b border-ink/15 py-10 sm:border-b-0 sm:border-r sm:px-8 sm:py-14">
-        <dt class="text-[0.9375rem] text-ink-soft">{t('home.proof.top_sub')}</dt>
-        <dd class="num whitespace-nowrap font-display text-6xl leading-none lg:text-[5.5rem]">{t('home.proof.top').replace('MGTe ', '')}<span class="ml-2 align-top font-sans text-sm font-semibold tracking-wide text-achiote">MGTe</span></dd>
-      </div>
-      <div class="flex flex-col-reverse justify-start gap-3 py-10 sm:py-14 sm:pl-8">
-        <dt class="text-[0.9375rem] text-ink-soft">{t('home.proof.champion_sub')}</dt>
-        <dd class="font-display text-[2.6rem] italic leading-[1] lg:text-[3.4rem]">{t('home.proof.champion')}</dd>
-      </div>
-    </dl>
-  </section>
-
-  <!-- Breeds: a triptych, swipeable on phones -->
-  <section class="py-24 lg:py-36">
-    <div class="container-x">
-      <SectionHead title={t('home.breeds.title')} />
-    </div>
-    <ul class="mt-12 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-px-5 px-5 pb-4 [scrollbar-width:none] md:container-x md:grid md:grid-cols-3 md:gap-6 md:overflow-visible lg:mt-16">
-      {breeds.map((b) => (
-        <li class="group w-[80vw] max-w-sm shrink-0 snap-start md:w-auto md:max-w-none">
-          <a href={`${href(lang, 'genetics')}#${b.id}`} class="block">
-            <div class="relative aspect-[3/4] overflow-hidden rounded-[2px] bg-paper-deep">
-              <Image src={photo(b.photo)} alt="" widths={[480, 720, 960]} sizes="(min-width:768px) 33vw, 80vw" class="size-full object-cover transition-transform duration-[1.2s] ease-[var(--ease-out-expo)] group-hover:scale-[1.04]" />
-              <div class="absolute inset-0 bg-[linear-gradient(to_top,rgb(20_28_23/0.7),transparent_45%)]"></div>
-              <h3 class="absolute inset-x-5 bottom-4 flex items-end justify-between text-[2.25rem] leading-none text-paper lg:text-5xl">
-                {b.name[lang]}<Icon name="arrow" class="mb-1 size-6 transition-transform duration-500 group-hover:translate-x-1" />
-              </h3>
-            </div>
-          </a>
-          <p class="mt-5 max-w-[34ch] leading-relaxed text-ink-soft">{b.text[lang]}</p>
-        </li>
-      ))}
-    </ul>
-  </section>
+  <CinemaHero lang={lang} />
 
   <!-- Featured animals: the catalogue, on dark ground -->
   <section class="on-ink bg-ink py-24 text-paper lg:py-36">
@@ -104,27 +37,6 @@ const words = t('home.hero.title').split(' ');
     </div>
   </section>
 
-  <!-- Video feature -->
-  <section class="container-x grid items-center gap-14 py-24 lg:grid-cols-[1fr_minmax(0,24rem)] lg:gap-24 lg:py-36">
-    <div>
-      <SectionHead title={t('home.video.title')} lead={t('home.video.lead')} meta={t('home.video.eyebrow')} />
-      <div class="mt-10"><WaButton intent="genetics" lang={lang} vars={{ breed: 'Sindi' }} variant="achiote">{t('cta.ask_genetics')}</WaButton></div>
-    </div>
-    <VideoPlayer id="expocruz-sindi-reel" title="Expocruz 2026 · Sindi" class="mx-auto w-full max-w-sm" />
-  </section>
-
-  <!-- Philosophy -->
-  <section class="on-ink relative isolate overflow-hidden bg-ink">
-    <Image src={photo('campo-futuro')} alt="" widths={[800, 1400, 2000]} sizes="100vw" class="absolute inset-0 -z-10 size-full object-cover object-[50%_60%]" />
-    <div class="absolute inset-0 -z-10 bg-[rgb(20_28_23/0.62)]"></div>
-    <figure class="container-x py-32 text-paper lg:py-48">
-      <blockquote class="max-w-5xl font-display text-[2rem] italic leading-[1.15] sm:text-5xl lg:text-[4rem]">
-        <span aria-hidden="true" class="block h-[0.55em] font-display text-[2.4em] not-italic leading-none text-ember">“</span>{t('home.philosophy.quote')}
-      </blockquote>
-      <figcaption class="label mt-10 text-dust">{t('home.philosophy.cite')}</figcaption>
-    </figure>
-  </section>
-
   <!-- Visit + next auction -->
   <section class="container-x grid gap-14 py-24 lg:grid-cols-[1.05fr_1fr] lg:gap-24 lg:py-36">
     <figure>
@@ -134,7 +46,7 @@ const words = t('home.hero.title').split(' ');
       <figcaption class="mt-3 flex items-center gap-2 text-sm text-ink-soft"><Icon name="pin" class="size-4 text-achiote" />{site.location.ranch} · {site.location.area}</figcaption>
     </figure>
     <div class="flex flex-col justify-center">
-      <SectionHead title={t('home.visit.title')} lead={t('home.visit.lead')} meta={t('home.visit.eyebrow')} />
+      <SectionHead title={t('home.visit.title')} meta={t('home.visit.eyebrow')} />
       <div class="mt-10 flex flex-col gap-3 sm:flex-row">
         <WaButton intent="visit" lang={lang}>{t('cta.visit')}</WaButton>
         <LinkButton href={href(lang, 'about')}>{t('nav.about')}</LinkButton>

@@ -188,13 +188,15 @@ const strings = {
   suggest.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => ask(b.textContent!)));
   render();
 
-  // On phones, keep the dock out of the way while a hero with its own WhatsApp button is on screen.
+  // On phones, keep the dock out of the way while a cinematic/hero section fills the bottom of the screen
+  // (those sections carry their own WhatsApp button or need the space).
   const heroes = document.querySelectorAll('[data-hide-dock]');
   if (heroes.length) {
+    const under = new Set<Element>();
     const io = new IntersectionObserver((entries) => {
-      const visible = entries.some((e) => e.isIntersecting && e.intersectionRatio > 0.35);
-      root.toggleAttribute('data-tucked', visible && panel.hidden === true && menu.hidden === true);
-    }, { threshold: [0, 0.35, 1] });
+      for (const e of entries) e.isIntersecting ? under.add(e.target) : under.delete(e.target);
+      root.toggleAttribute('data-tucked', under.size > 0 && panel.hidden === true && menu.hidden === true);
+    }, { rootMargin: '-82% 0px 0px 0px' });
     heroes.forEach((h) => io.observe(h));
   }
 </script>

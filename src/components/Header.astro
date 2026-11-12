@@ -83,7 +83,12 @@ const current = Astro.url.pathname;
   btn.addEventListener('click', () => setOpen(btn.getAttribute('aria-expanded') !== 'true'));
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !menu.hidden) { setOpen(false); btn.focus(); } });
   if (header.hasAttribute('data-overlay')) {
-    const onScroll = () => header.toggleAttribute('data-solid', scrollY > 24);
+    // Stay transparent over dark cinematic sections; turn solid once they have scrolled past.
+    const dark = [...document.querySelectorAll<HTMLElement>('[data-header-dark]')];
+    const onScroll = () => {
+      const limit = dark.length ? Math.max(...dark.map((d) => d.offsetTop + d.offsetHeight)) - header.offsetHeight : 24;
+      header.toggleAttribute('data-solid', scrollY > limit);
+    };
     addEventListener('scroll', onScroll, { passive: true });
     onScroll();
   }
