@@ -3,6 +3,7 @@ import { Image } from 'astro:assets';
 import Base from '../../../layouts/Base.astro';
 import PageHero from '../../../components/PageHero.astro';
 import Icon from '../../../components/Icon.astro';
+import WaFunnel from '../../../components/WaFunnel.astro';
 import { locales, useT, type Locale } from '../../../i18n/ui';
 import { intents, waLink } from '../../../lib/wa';
 import { site } from '../../../data/site';
@@ -11,16 +12,13 @@ import { photo } from '../../../lib/media';
 export const getStaticPaths = () => locales.map((lang) => ({ params: { lang } }));
 const lang = Astro.params.lang as Locale;
 const t = useT(lang);
-const labels = {
-  name: t('contact.visit.name'), ranch: t('contact.visit.ranch'), date: t('contact.visit.date'),
-  people: t('contact.visit.people'), interest: t('contact.visit.interest'),
-};
-const field = 'mt-2 block w-full min-h-12 rounded-[3px] border border-ink/25 bg-white/70 px-4 py-3 text-base font-normal outline-none transition-colors placeholder:text-ink-soft hover:border-ink/50 focus:border-achiote focus:bg-white focus:ring-2 focus:ring-achiote/20 user-invalid:border-achiote';
 ---
 <Base lang={lang} title={t('contact.title')} description={t('contact.lead')} band={false}>
   <PageHero label={t('contact.eyebrow')} title={t('contact.title')} lead={t('contact.lead')} />
 
-  <section class="container-x grid gap-16 pb-24 lg:grid-cols-[0.9fr_1.1fr] lg:gap-24 lg:pb-36">
+  <WaFunnel lang={lang} />
+
+  <section class="container-x grid gap-16 py-24 lg:grid-cols-2 lg:gap-24 lg:py-32">
     <div>
       <ul class="border-t border-ink/25">
         {intents.map((i) => (
@@ -31,43 +29,13 @@ const field = 'mt-2 block w-full min-h-12 rounded-[3px] border border-ink/25 bg-
           </a></li>
         ))}
       </ul>
-      <dl class="mt-14 grid gap-10 sm:grid-cols-2">
+    </div>
+    <div>
+      <Image src={photo('visita-pesqueria')} alt="" widths={[600, 900]} sizes="(min-width:1024px) 50vw, 100vw" class="h-64 w-full rounded-[2px] object-cover object-[50%_70%]" />
+      <dl class="mt-10 grid gap-10 sm:grid-cols-2">
         <div><dt class="label text-achiote">{t('contact.where')}</dt><dd class="mt-3 leading-relaxed">{site.location.ranch}<br />{site.location.area}<br /><a class="link-line mt-2 inline-flex items-center gap-1.5 font-semibold text-achiote" href={site.location.maps} target="_blank" rel="noopener"><Icon name="pin" />Google Maps</a></dd></div>
         <div><dt class="label text-achiote">{t('contact.social')}</dt><dd class="mt-3 grid gap-1.5"><a class="link-line" href={site.instagram} target="_blank" rel="noopener">Instagram · @haciendasurucu</a><a class="link-line" href={site.facebook} target="_blank" rel="noopener">Facebook</a><span class="num">WhatsApp {site.phoneDisplay}</span></dd></div>
       </dl>
     </div>
-
-    <div class="overflow-hidden rounded-[2px] bg-paper-deep/60 ring-1 ring-ink/12">
-      <Image src={photo('visita-pesqueria')} alt="" widths={[600, 900]} sizes="(min-width:1024px) 50vw, 100vw" class="h-56 w-full object-cover object-[50%_70%] lg:h-64" />
-      <form id="visit-form" class="grid gap-6 p-6 sm:grid-cols-2 sm:p-10" data-lang={lang} data-labels={JSON.stringify(labels)}>
-        <h2 class="text-4xl leading-tight sm:col-span-2">{t('contact.visit.title')}</h2>
-        <label class="text-sm font-semibold">{labels.name}<input required name="name" autocomplete="name" class={field} /></label>
-        <label class="text-sm font-semibold">{labels.ranch}<input name="ranch" autocomplete="organization" class={field} /></label>
-        <label class="text-sm font-semibold">{labels.date}<input required name="date" type="date" class={field} /></label>
-        <label class="text-sm font-semibold">{labels.people}<input required name="people" type="number" inputmode="numeric" min="1" max="60" value="2" class:list={[field, 'num']} /></label>
-        <label class="text-sm font-semibold sm:col-span-2">{labels.interest}<textarea name="interest" rows="3" class={field}></textarea></label>
-        <div class="sm:col-span-2">
-          <button type="submit" data-wa-intent="visit" class="inline-flex min-h-13 w-full items-center justify-center gap-3 rounded-[3px] bg-wa-dark px-7 text-[0.9375rem] font-semibold text-white transition-colors hover:bg-[#0b6334] sm:w-auto"><Icon name="whatsapp" class="size-[1.15rem]" />{t('contact.visit.submit')}</button>
-          <p class="mt-4 text-sm text-ink-soft">{t('contact.visit.note')}</p>
-        </div>
-      </form>
-    </div>
   </section>
 </Base>
-
-<script>
-  import { waLink } from '../../../lib/wa';
-  import type { Locale } from '../../../i18n/ui';
-  const form = document.getElementById('visit-form') as HTMLFormElement;
-  const lang = form.dataset.lang as Locale;
-  const L = JSON.parse(form.dataset.labels!) as Record<string, string>;
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const d = new FormData(form);
-    const lines = (['name', 'ranch', 'date', 'people', 'interest'] as const)
-      .map((k) => [k, String(d.get(k) ?? '').trim()] as const)
-      .filter(([, v]) => v)
-      .map(([k, v]) => `${L[k]}: ${v}`);
-    window.open(waLink('visit', lang, {}, lines.join('\n')), '_blank', 'noopener');
-  });
-</script>

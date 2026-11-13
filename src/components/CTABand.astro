@@ -14,7 +14,7 @@ const t = useT(lang);
     </div>
     <div class="flex flex-col gap-3 sm:flex-row lg:justify-end">
       <WaButton intent="general" lang={lang} variant="paper">{t('cta.whatsapp')}</WaButton>
-      <LinkButton href={href(lang, 'contact')} variant="light">{t('cta.visit')}</LinkButton>
+      <LinkButton href={`${href(lang, 'contact')}#consulta`} variant="light">{t('cta.visit')}</LinkButton>
     </div>
   </div>
 </section>

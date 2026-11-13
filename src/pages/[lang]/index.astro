@@ -9,6 +9,7 @@ import Icon from '../../components/Icon.astro';
 import HomeHero from '../../components/HomeHero.astro';
 import Highlights from '../../components/Highlights.astro';
 import VideoPlayer from '../../components/VideoPlayer.astro';
+import WaFunnel from '../../components/WaFunnel.astro';
 import { locales, href, useT, type Locale } from '../../i18n/ui';
 import { animals } from '../../data/animals';
 import { site, breeds, aiResults, aiTotal, awards2026, partners } from '../../data/site';
@@ -149,6 +150,8 @@ const stats = [
       </div>
     </div>
   </section>
+
+  <WaFunnel lang={lang} />
 
   <!-- Visit + next auction -->
   <section class="border-t border-ink/12 bg-paper-deep/50">
