@@ -1,0 +1,188 @@
+---
+// The Instagram story highlights, on the site: a row of covers that opens a full-screen story viewer.
+// Viewer: progress bars, tap left/right (or arrow keys) to move, auto-advance, sound toggle, Esc to close.
+import { getImage } from 'astro:assets';
+import { highlights } from '../data/highlights';
+import { photo, videoSrc, posterSrc, isLandscape } from '../lib/media';
+import { useT, type Locale } from '../i18n/ui';
+import { site } from '../data/site';
+import Icon from './Icon.astro';
+interface Props { lang: Locale }
+const { lang } = Astro.props;
+const t = useT(lang);
+
+const data = await Promise.all(highlights.map(async (h) => ({
+  id: h.id,
+  title: h.title,
+  cover: `/media/highlights/${h.id}.jpg`,
+  slides: await Promise.all(h.slides.map(async (s) => s.video
+    ? { kind: 'video', src: videoSrc(s.video), poster: posterSrc(s.video), wide: isLandscape(s.video), text: s.text[lang], credit: s.credit ?? '' }
+    : { kind: 'photo', src: (await getImage({ src: photo(s.photo!), width: 900, format: 'webp' })).src, text: s.text[lang], credit: s.credit ?? '' })),
+})));
+---
+<section class="hl on-ink bg-ink text-paper" aria-labelledby="hl-title">
+  <div class="container-x py-14 lg:py-20">
+    <div class="flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <p class="label text-dust">{t('home.hl.eyebrow')}</p>
+        <h2 id="hl-title" class="mt-3 text-4xl leading-none lg:text-5xl">{t('home.hl.title')}</h2>
+      </div>
+      <a href={site.instagram} target="_blank" rel="noopener" class="link-line text-sm text-paper/75">@haciendasurucu · {t('gallery.follow')}</a>
+    </div>
+    <ul class="hl-row mt-10">
+      {highlights.map((h, i) => (
+        <li>
+          <button type="button" class="hl-item group" data-open={i}>
+            <span class="hl-ring"><img src={`/media/highlights/${h.id}.jpg`} alt="" width="96" height="96" loading="lazy" decoding="async" /></span>
+            <span class="hl-name">{h.title}</span>
+            <span class="hl-text">{h.text[lang]}</span>
+          </button>
+        </li>
+      ))}
+    </ul>
+  </div>
+
+  <dialog id="story" class="story" aria-label={t('home.hl.title')} data-json={JSON.stringify(data)}>
+    <div class="story-frame">
+      <div class="story-media"></div>
+      <div class="story-bars"></div>
+      <header class="story-head">
+        <img class="story-avatar" alt="" width="36" height="36" />
+        <p class="story-title"></p>
+        <button type="button" class="story-btn" data-mute aria-pressed="false" aria-label={t('home.hl.sound')}>
+          <svg viewBox="0 0 24 24" class="size-6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path class="snd-off" d="m16 9.5 5 5m0-5-5 5"/><path class="snd-on" d="M16 9a4.2 4.2 0 0 1 0 6m2.5-8.5a7.7 7.7 0 0 1 0 11"/></svg>
+        </button>
+        <button type="button" class="story-btn" data-close aria-label={t('nav.close')}><Icon name="close" class="size-6" /></button>
+      </header>
+      <div class="story-tap"><button type="button" data-dir="-1" aria-label={t('home.hl.prev')}></button><button type="button" data-dir="1" aria-label={t('home.hl.next')}></button></div>
+      <footer class="story-foot"><p class="story-text"></p><p class="story-credit"></p></footer>
+    </div>
+    <button type="button" class="story-arrow story-arrow-l" data-hop="-1" aria-label={t('home.hl.prev')}><Icon name="arrow-left" class="size-6" /></button>
+    <button type="button" class="story-arrow story-arrow-r" data-hop="1" aria-label={t('home.hl.next')}><Icon name="arrow" class="size-6" /></button>
+  </dialog>
+</section>
+
+<style is:global>
+  .hl-row { display: flex; gap: 1.25rem; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; margin-inline: -1.25rem; padding: .25rem 1.25rem 1rem; }
+  .hl-row::-webkit-scrollbar { display: none; }
+  .hl-row > li { scroll-snap-align: start; flex: 0 0 auto; }
+  .hl-item { display: flex; flex-direction: column; align-items: center; width: 6.5rem; text-align: center; }
+  .hl-ring { display: block; padding: 3px; border-radius: 999px; background: conic-gradient(from 210deg, var(--color-ember), var(--color-gold), var(--color-achiote), var(--color-ember)); transition: transform .5s var(--ease-out-expo); }
+  .hl-ring img { display: block; width: 5.75rem; height: 5.75rem; border-radius: 999px; object-fit: cover; border: 3px solid var(--color-ink); transform: scale(1.04); }
+  .hl-item:hover .hl-ring { transform: scale(1.06) rotate(-3deg); }
+  .hl-name { margin-top: .7rem; font-weight: 600; font-size: .9375rem; }
+  .hl-text { margin-top: .25rem; font-size: .75rem; line-height: 1.35; color: rgb(242 236 225 / .6); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  @media (min-width: 64rem) {
+    .hl-row { margin: 0; padding-inline: 0; justify-content: space-between; overflow: visible; }
+    .hl-item { width: 8.5rem; }
+    .hl-ring img { width: 7.25rem; height: 7.25rem; }
+  }
+
+  .story { position: fixed; inset: 0; width: 100vw; height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; background: rgb(8 10 9 / .96); color: var(--color-paper); }
+  .story[open] { display: grid; place-items: center; }
+  .story::backdrop { background: transparent; }
+  .story-frame { position: relative; width: 100%; height: 100%; overflow: hidden; background: #000; }
+  @media (min-width: 40rem) { .story-frame { width: auto; height: min(92dvh, 52rem); aspect-ratio: 9 / 16; border-radius: 10px; } }
+  .story-media > * { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .story-media > .wide { object-fit: contain; }
+  .story-bars { position: absolute; top: .75rem; left: .75rem; right: .75rem; display: flex; gap: .25rem; z-index: 3; }
+  .story-bars i { flex: 1; height: 2px; background: rgb(255 255 255 / .3); border-radius: 2px; overflow: hidden; }
+  .story-bars b { display: block; height: 100%; background: #fff; transform-origin: left; transform: scaleX(0); }
+  .story-head { position: absolute; top: 1.4rem; left: .75rem; right: .25rem; z-index: 3; display: flex; align-items: center; gap: .6rem; }
+  .story-avatar { width: 2.25rem; height: 2.25rem; border-radius: 999px; object-fit: cover; border: 1.5px solid var(--color-ember); }
+  .story-title { flex: 1; font-weight: 600; font-size: .9375rem; text-shadow: 0 1px 6px rgb(0 0 0 / .6); }
+  .story-btn { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: 999px; font-size: 1.1rem; }
+  .story-btn .snd-on, .story-btn[aria-pressed='true'] .snd-off { display: none; }
+  .story-btn[aria-pressed='true'] .snd-on { display: inline; }
+  .story-btn:hover { background: rgb(255 255 255 / .12); }
+  .story-tap { position: absolute; inset: 4.5rem 0 7rem; display: flex; z-index: 2; }
+  .story-tap button { flex: 1; cursor: pointer; }
+  .story-tap button:focus-visible { outline-offset: -4px; }
+  .story-foot { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; padding: 5rem 1.25rem max(1.5rem, env(safe-area-inset-bottom)); background: linear-gradient(to top, rgb(0 0 0 / .8), transparent); }
+  .story-text { font-family: var(--font-display); font-size: 1.5rem; line-height: 1.15; }
+  .story-credit { margin-top: .4rem; font-size: .75rem; color: rgb(255 255 255 / .65); }
+  .story-arrow { display: none; }
+  @media (min-width: 40rem) {
+    .story-arrow { display: grid; place-items: center; position: absolute; top: 50%; translate: 0 -50%; width: 3.25rem; height: 3.25rem; border-radius: 999px; background: rgb(255 255 255 / .1); }
+    .story-arrow:hover { background: rgb(255 255 255 / .22); }
+    .story-arrow-l { left: max(1rem, calc(50% - min(92dvh, 52rem) * 9 / 32 - 5rem)); }
+    .story-arrow-r { right: max(1rem, calc(50% - min(92dvh, 52rem) * 9 / 32 - 5rem)); }
+  }
+</style>
+
+<script>
+  type S = { kind: 'video' | 'photo'; src: string; poster?: string; wide?: boolean; text: string; credit: string };
+  type H = { id: string; title: string; cover: string; slides: S[] };
+  const dlg = document.getElementById('story') as HTMLDialogElement;
+  const data = JSON.parse(dlg.dataset.json!) as H[];
+  const $ = <T extends Element>(s: string) => dlg.querySelector<T>(s)!;
+  const media = $<HTMLElement>('.story-media'), barsEl = $<HTMLElement>('.story-bars');
+  const title = $<HTMLElement>('.story-title'), avatar = $<HTMLImageElement>('.story-avatar');
+  const text = $<HTMLElement>('.story-text'), credit = $<HTMLElement>('.story-credit');
+  const muteBtn = $<HTMLButtonElement>('[data-mute]');
+  const PHOTO_MS = 5500, VIDEO_MAX_MS = 15000;
+  let h = 0, s = 0, t0 = 0, dur = PHOTO_MS, raf = 0, muted = true, hold = false, held = 0;
+  let video: HTMLVideoElement | null = null;
+
+  function setMute() { muteBtn.setAttribute('aria-pressed', String(!muted)); if (video) video.muted = muted; }
+
+  function render() {
+    const hl = data[h], sl = hl.slides[s];
+    title.textContent = hl.title; avatar.src = hl.cover;
+    text.textContent = sl.text; credit.textContent = sl.credit;
+    barsEl.replaceChildren(...hl.slides.map((_, i) => { const el = document.createElement('i'); const b = document.createElement('b'); if (i < s) b.style.transform = 'scaleX(1)'; el.append(b); return el; }));
+    video?.pause();
+    video = null;
+    if (sl.kind === 'video') {
+      const v = document.createElement('video');
+      v.src = sl.src; v.poster = sl.poster ?? ''; v.playsInline = true; v.muted = muted; v.autoplay = true; v.preload = 'auto';
+      if (sl.wide) v.className = 'wide';
+      v.addEventListener('loadedmetadata', () => { dur = Math.min(VIDEO_MAX_MS, v.duration * 1000); });
+      v.addEventListener('ended', next);
+      media.replaceChildren(v);
+      video = v;
+      dur = VIDEO_MAX_MS;
+      v.play().catch(() => {});
+    } else {
+      const img = document.createElement('img');
+      img.src = sl.src; img.alt = sl.text;
+      media.replaceChildren(img);
+      dur = PHOTO_MS;
+    }
+    t0 = performance.now(); held = 0;
+  }
+  function next() { const hl = data[h]; if (s < hl.slides.length - 1) { s++; render(); } else hop(1); }
+  function prev() { if (s > 0) { s--; render(); } else if (h > 0) { h--; s = 0; render(); } else render(); }
+  function hop(d: number) { const n = h + d; if (n < 0 || n >= data.length) return close(); h = n; s = 0; render(); }
+  function tick(now: number) {
+    raf = requestAnimationFrame(tick);
+    if (hold) { held = now - t0; return; }
+    const p = Math.min(1, (now - t0) / dur);
+    const b = barsEl.children[s]?.firstElementChild as HTMLElement | undefined;
+    if (b) b.style.transform = `scaleX(${p})`;
+    if (p >= 1) next();
+  }
+  function open(i: number) {
+    h = i; s = 0;
+    dlg.showModal();
+    document.documentElement.style.overflow = 'hidden';
+    render();
+    cancelAnimationFrame(raf); raf = requestAnimationFrame(tick);
+  }
+  function close() { if (dlg.open) dlg.close(); }
+  dlg.addEventListener('close', () => { cancelAnimationFrame(raf); video?.pause(); media.replaceChildren(); document.documentElement.style.overflow = ''; });
+
+  document.querySelectorAll<HTMLButtonElement>('[data-open]').forEach((b) => b.addEventListener('click', () => open(Number(b.dataset.open))));
+  dlg.querySelectorAll<HTMLButtonElement>('.story-tap button').forEach((b) => b.addEventListener('click', () => (b.dataset.dir === '1' ? next() : prev())));
+  dlg.querySelectorAll<HTMLButtonElement>('[data-hop]').forEach((b) => b.addEventListener('click', () => hop(Number(b.dataset.hop))));
+  $('[data-close]').addEventListener('click', close);
+  muteBtn.addEventListener('click', () => { muted = !muted; setMute(); });
+  dlg.addEventListener('click', (e) => { if (e.target === dlg) close(); });
+  dlg.addEventListener('keydown', (e) => { if (e.key === 'ArrowRight') next(); if (e.key === 'ArrowLeft') prev(); });
+  // press and hold to pause
+  const tap = $<HTMLElement>('.story-tap');
+  tap.addEventListener('pointerdown', () => { hold = true; video?.pause(); });
+  const release = () => { if (!hold) return; hold = false; t0 = performance.now() - held; video?.play().catch(() => {}); };
+  tap.addEventListener('pointerup', release); tap.addEventListener('pointercancel', release); tap.addEventListener('pointerleave', release);
+  setMute();
+</script>

@@ -7,30 +7,75 @@ import LinkButton from '../../components/LinkButton.astro';
 import AnimalCard from '../../components/AnimalCard.astro';
 import Icon from '../../components/Icon.astro';
 import HomeHero from '../../components/HomeHero.astro';
-import HomeReel from '../../components/HomeReel.astro';
+import Highlights from '../../components/Highlights.astro';
+import VideoPlayer from '../../components/VideoPlayer.astro';
 import { locales, href, useT, type Locale } from '../../i18n/ui';
 import { animals } from '../../data/animals';
-import { site } from '../../data/site';
+import { site, breeds, aiResults, aiTotal, awards2026, partners } from '../../data/site';
+import { videos } from '../../data/videos';
 import { upcoming } from '../../data/events';
 import { photo } from '../../lib/media';
 
 export const getStaticPaths = () => locales.map((lang) => ({ params: { lang } }));
 const lang = Astro.params.lang as Locale;
 const t = useT(lang);
+const fmt = (n: number) => n.toLocaleString(lang, { maximumFractionDigits: 2 });
 const featured = animals.filter((a) => a.featured);
 const next = upcoming()[0];
+const explains = videos.find((v) => v.series === 'explains')!;
+const expocruz = videos.find((v) => v.id === 'expocruz-sindi-reel')!;
+const fexposiv = awards2026[0];
+const stats = [
+  { n: `${fmt(aiTotal)}%`, label: t('home.proof.pregnancy'), sub: t('home.proof.pregnancy_sub') },
+  { n: String(fexposiv.items.length), label: t('home.stats.awards'), sub: t('home.proof.champion_sub') },
+  { n: 'Top 1%', label: 'MGTe', sub: t('home.proof.top_sub') },
+  { n: String(breeds.length), label: t('home.stats.breeds'), sub: breeds.map((b) => b.name[lang]).join(' · ') },
+];
 ---
 <Base lang={lang} overlay>
-  <link slot="head" rel="preload" as="image" href="/media/film/gate.jpg" fetchpriority="high" />
+  <link slot="head" rel="preload" as="image" href="/media/film/campo.jpg" fetchpriority="high" />
 
   <HomeHero lang={lang} />
-  <HomeReel lang={lang} />
+  <Highlights lang={lang} />
+
+  <!-- Proof in numbers -->
+  <section class="on-ink border-t border-paper/10 bg-ink-2 text-paper" aria-label={t('home.proof.title')}>
+    <ul class="container-x grid grid-cols-2 lg:grid-cols-4">
+      {stats.map((s, i) => (
+        <li class:list={['flex flex-col border-paper/12 py-10 lg:py-14', i % 2 === 0 ? 'pr-4 lg:pr-8' : 'border-l pl-4 lg:pl-8', i > 1 && 'border-t lg:border-t-0', i === 2 && 'lg:border-l lg:pl-8']}>
+          <p class="num font-display text-[2.6rem] leading-none text-ember sm:text-6xl">{s.n}</p>
+          <p class="mt-3 font-semibold leading-snug">{s.label}</p>
+          <p class="mt-1 text-sm leading-snug text-paper/60">{s.sub}</p>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <!-- Breeds -->
+  <section class="container-x py-24 lg:py-32">
+    <div class="flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
+      <SectionHead title={t('home.breeds.title')} meta={t('home.breeds.eyebrow')} />
+      <LinkButton href={href(lang, 'genetics')} size="sm" class="self-start md:self-auto">{t('nav.genetics')}</LinkButton>
+    </div>
+    <div class="mt-14 grid gap-6 md:grid-cols-3">
+      {breeds.map((b) => (
+        <a href={`${href(lang, 'genetics')}#${b.id}`} class="group relative block overflow-hidden rounded-[2px] bg-ink text-paper">
+          <Image src={photo(b.photo)} alt={b.name[lang]} widths={[480, 720, 960]} sizes="(min-width:768px) 33vw, 100vw" class="aspect-[4/5] size-full object-cover opacity-90 transition-transform duration-[1.4s] ease-[var(--ease-out-expo)] group-hover:scale-[1.05]" />
+          <div class="absolute inset-0 flex flex-col justify-end bg-[linear-gradient(to_top,rgb(20_28_23/0.92),rgb(20_28_23/0.2)_55%,transparent)] p-6 lg:p-8">
+            <h3 class="text-4xl leading-none lg:text-5xl">{b.name[lang]}</h3>
+            <p class="mt-3 text-[0.9375rem] leading-snug text-paper/80">{b.text[lang]}</p>
+            <span class="label mt-5 inline-flex items-center gap-2 text-ember">{t('cta.more')}<Icon name="arrow" class="size-4 transition-transform group-hover:translate-x-1" /></span>
+          </div>
+        </a>
+      ))}
+    </div>
+  </section>
 
   <!-- Featured animals: the catalogue, on dark ground -->
-  <section class="on-ink bg-ink py-24 text-paper lg:py-36">
+  <section class="on-ink bg-ink py-24 text-paper lg:py-32">
     <div class="container-x">
       <div class="flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
-        <SectionHead tone="paper" title={t('home.featured.title')} />
+        <SectionHead tone="paper" title={t('home.featured.title')} meta={t('herd.lead')} />
         <LinkButton href={href(lang, 'herd')} variant="light" size="sm" class="self-start md:self-auto">{t('cta.herd')}</LinkButton>
       </div>
       <div class="mt-14 grid gap-x-6 gap-y-14 sm:grid-cols-2 lg:mt-16 lg:grid-cols-4">
@@ -39,29 +84,105 @@ const next = upcoming()[0];
     </div>
   </section>
 
-  <!-- Visit + next auction -->
-  <section class="container-x grid gap-14 py-24 lg:grid-cols-[1.05fr_1fr] lg:gap-24 lg:py-36">
-    <figure>
-      <div class="overflow-hidden rounded-[2px] bg-paper-deep">
-        <Image src={photo('visita-pesqueria')} alt={t('home.visit.title')} widths={[600, 900, 1200]} sizes="(min-width:1024px) 50vw, 100vw" class="aspect-[4/5] size-full object-cover" />
-      </div>
-      <figcaption class="mt-3 flex items-center gap-2 text-sm text-ink-soft"><Icon name="pin" class="size-4 text-achiote" />{site.location.ranch} · {site.location.area}</figcaption>
-    </figure>
-    <div class="flex flex-col justify-center">
-      <SectionHead title={t('home.visit.title')} meta={t('home.visit.eyebrow')} />
-      <div class="mt-10 flex flex-col gap-3 sm:flex-row">
-        <WaButton intent="visit" lang={lang}>{t('cta.visit')}</WaButton>
-        <LinkButton href={href(lang, 'about')}>{t('nav.about')}</LinkButton>
-      </div>
-      <a href={href(lang, 'auctions')} class="group mt-16 block border-y border-ink/20 py-6">
-        <p class="label text-achiote">{t('auctions.next')}</p>
-        <div class="mt-3 flex items-end justify-between gap-6">
-          {next
-            ? <p class="font-display text-3xl leading-tight">{next.name}</p>
-            : <p class="max-w-md leading-relaxed text-ink-soft">{t('auctions.next_tbd')}</p>}
-          <Icon name="arrow" class="mb-1 size-6 text-achiote transition-transform duration-500 group-hover:translate-x-1" />
-        </div>
-      </a>
+  <!-- Philosophy + Urucú Te Explica -->
+  <section class="container-x grid items-center gap-14 py-24 lg:grid-cols-[1.2fr_1fr] lg:gap-24 lg:py-32">
+    <div>
+      <p class="label text-achiote">{t('gallery.explains')}</p>
+      <blockquote class="mt-6">
+        <p class="font-display text-[2rem] leading-[1.12] sm:text-5xl lg:text-[3.4rem]">“{t('home.philosophy.quote')}”</p>
+        <footer class="label mt-6 text-ink-soft">{t('home.philosophy.cite')}</footer>
+      </blockquote>
+      <ul class="mt-12 grid gap-x-8 gap-y-6 border-t border-ink/20 pt-8 sm:grid-cols-2">
+        {([1, 2, 3, 4] as const).map((i) => (
+          <li>
+            <p class="font-display text-2xl leading-tight">{t(`about.values.${i}`)}</p>
+            <p class="mt-1.5 text-[0.9375rem] leading-snug text-ink-soft">{t(`about.values.${i}d`)}</p>
+          </li>
+        ))}
+      </ul>
     </div>
+    <VideoPlayer id={explains.id} title={explains.title[lang]} class="mx-auto w-full max-w-sm" />
+  </section>
+
+  <!-- Results: AI table + awards -->
+  <section class="on-ink bg-ink py-24 text-paper lg:py-32">
+    <div class="container-x grid gap-16 lg:grid-cols-2 lg:gap-24">
+      <div>
+        <SectionHead tone="paper" size="md" title={t('genetics.results.title')} lead={t('genetics.results.lead')} />
+        <table class="mt-10 w-full text-left">
+          <thead class="label text-dust">
+            <tr class="border-b border-paper/20"><th class="py-3 font-semibold">{t('genetics.results.bull')}</th><th class="py-3 text-right font-semibold">{t('genetics.results.rate')}</th></tr>
+          </thead>
+          <tbody>
+            {aiResults.map((r) => (
+              <tr class="border-b border-paper/12">
+                <td class="py-4 pr-4"><p class="font-display text-xl">{r.name}</p><p class="mt-0.5 text-sm text-paper/60">{r.pedigree}</p></td>
+                <td class="num py-4 text-right font-display text-3xl text-ember">{fmt(r.rate)}%</td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot><tr><td class="label pt-5 text-dust">{t('genetics.results.total')}</td><td class="num pt-5 text-right font-display text-4xl">{fmt(aiTotal)}%</td></tr></tfoot>
+        </table>
+      </div>
+      <div>
+        <SectionHead tone="paper" size="md" title={t('herd.awards.title')} lead={t('home.awards.lead')} />
+        {awards2026.map((a) => (
+          <div class="mt-10">
+            <p class="label flex items-center gap-2 text-gold"><Icon name="award" class="size-4" />{a.event}</p>
+            <ul class="mt-4 divide-y divide-paper/12 border-y border-paper/12">
+              {a.items.map((it) => <li class="py-3 leading-snug text-paper/85">{it[lang]}</li>)}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Expocruz film -->
+  <section class="container-x grid items-center gap-14 py-24 lg:grid-cols-[1fr_1.2fr] lg:gap-24 lg:py-32">
+    <VideoPlayer id={expocruz.id} title={expocruz.title[lang]} class="mx-auto w-full max-w-sm lg:order-1" />
+    <div class="lg:order-2">
+      <SectionHead title={t('home.video.title')} lead={t('home.video.lead')} meta={t('home.video.eyebrow')} />
+      <div class="mt-10 flex flex-col gap-3 sm:flex-row">
+        <WaButton intent="animal" lang={lang}>{t('cta.ask_animal')}</WaButton>
+        <LinkButton href={href(lang, 'gallery')}>{t('nav.gallery')}</LinkButton>
+      </div>
+    </div>
+  </section>
+
+  <!-- Visit + next auction -->
+  <section class="border-t border-ink/12 bg-paper-deep/50">
+    <div class="container-x grid gap-14 py-24 lg:grid-cols-[1.05fr_1fr] lg:gap-24 lg:py-32">
+      <figure>
+        <div class="overflow-hidden rounded-[2px] bg-paper-deep">
+          <Image src={photo('visita-pesqueria')} alt={t('home.visit.title')} widths={[600, 900, 1200]} sizes="(min-width:1024px) 50vw, 100vw" class="aspect-[4/5] size-full object-cover" />
+        </div>
+        <figcaption class="mt-3 flex items-center gap-2 text-sm text-ink-soft"><Icon name="pin" class="size-4 text-achiote" />{site.location.ranch} · {site.location.area}</figcaption>
+      </figure>
+      <div class="flex flex-col justify-center">
+        <SectionHead title={t('home.visit.title')} lead={t('home.visit.lead')} meta={t('home.visit.eyebrow')} />
+        <div class="mt-10 flex flex-col gap-3 sm:flex-row">
+          <WaButton intent="visit" lang={lang}>{t('cta.visit')}</WaButton>
+          <LinkButton href={href(lang, 'about')}>{t('nav.about')}</LinkButton>
+        </div>
+        <a href={href(lang, 'auctions')} class="group mt-16 block border-y border-ink/20 py-6">
+          <p class="label text-achiote">{t('auctions.next')}</p>
+          <div class="mt-3 flex items-end justify-between gap-6">
+            {next
+              ? <p class="font-display text-3xl leading-tight">{next.name}</p>
+              : <p class="max-w-md leading-relaxed text-ink-soft">{t('auctions.next_tbd')}</p>}
+            <Icon name="arrow" class="mb-1 size-6 text-achiote transition-transform duration-500 group-hover:translate-x-1" />
+          </div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Partners -->
+  <section class="container-x py-16 lg:py-20">
+    <p class="label text-center text-ink-soft">{t('about.partners.title')}</p>
+    <ul class="mt-8 flex flex-wrap items-center justify-center gap-x-10 gap-y-4 font-display text-2xl text-ink/80 lg:gap-x-16 lg:text-3xl">
+      {partners.map((p) => <li>{p}</li>)}
+    </ul>
   </section>
 </Base>
