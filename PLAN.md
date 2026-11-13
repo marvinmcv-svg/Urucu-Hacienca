@@ -1,6 +1,6 @@
 # Haciendas Urucú: Website Plan
 
-> Status: **PLAN, nothing built yet.** Written with the Karpathy guidelines: state assumptions, keep it simple, define checks for "done".
+> Status: **Phases 1–7 built** on branch `claude/modest-dirac-1lrpq6` (see README). Remaining items are content from the client, listed in §8. Written with the Karpathy guidelines: state assumptions, keep it simple, define checks for "done".
 > Media source: `assets/instagram/` (22 files: 9 photos, 13 videos). See `assets/instagram/README.md`.
 
 ---

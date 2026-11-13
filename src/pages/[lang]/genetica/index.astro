@@ -1,0 +1,93 @@
+---
+import Base from '../../../layouts/Base.astro';
+import PageHero from '../../../components/PageHero.astro';
+import SectionHead from '../../../components/SectionHead.astro';
+import VideoPlayer from '../../../components/VideoPlayer.astro';
+import WaButton from '../../../components/WaButton.astro';
+import { Image } from 'astro:assets';
+import { locales, useT, type Locale } from '../../../i18n/ui';
+import { breeds, aiResults, aiTotal } from '../../../data/site';
+import { photo } from '../../../lib/media';
+
+export const getStaticPaths = () => locales.map((lang) => ({ params: { lang } }));
+const lang = Astro.params.lang as Locale;
+const t = useT(lang);
+const fmt = (n: number) => n.toLocaleString(lang, { maximumFractionDigits: 2 });
+const programs = [
+  ['genetics.p.bulls', 'genetics.p.bulls_d', 'animal'],
+  ['genetics.p.females', 'genetics.p.females_d', 'animal'],
+  ['genetics.p.semen', 'genetics.p.semen_d', 'genetics'],
+  ['genetics.p.fiv', 'genetics.p.fiv_d', 'genetics'],
+] as const;
+---
+<Base lang={lang} title={t('genetics.eyebrow')} description={t('genetics.lead')} image={photo('otima-donante')} overlay>
+  <PageHero label={t('genetics.eyebrow')} title={t('genetics.title')} lead={t('genetics.lead')} image="otima-donante" position="50% 40%" />
+
+  <!-- Breeds: alternating editorial rows -->
+  <section class="container-x py-24 lg:py-36">
+    <SectionHead title={t('home.breeds.title')} />
+    <div class="mt-16 grid gap-20 lg:mt-24 lg:gap-28">
+      {breeds.map((b, i) => (
+        <article id={b.id} class="grid scroll-mt-28 items-center gap-8 md:grid-cols-2 md:gap-16">
+          <div class:list={['overflow-hidden rounded-[2px] bg-paper-deep', i % 2 === 1 && 'md:order-2']}>
+            <Image src={photo(b.photo)} alt={b.name[lang]} widths={[480, 720, 960, 1200]} sizes="(min-width:768px) 50vw, 100vw" class="aspect-[4/3] size-full object-cover md:aspect-[5/6]" />
+          </div>
+          <div class="md:max-w-md">
+            <h3 class="text-5xl leading-none lg:text-[4.5rem]">{b.name[lang]}</h3>
+            <p class="mt-6 text-lg leading-relaxed text-ink-soft">{b.text[lang]}</p>
+            <WaButton intent="genetics" lang={lang} vars={{ breed: b.name[lang] }} variant="ghost" class="mt-8">{t('cta.ask_genetics')}</WaButton>
+          </div>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <!-- Programs: ruled list on dark ground -->
+  <section class="on-ink bg-ink py-24 text-paper lg:py-36">
+    <div class="container-x">
+      <SectionHead tone="paper" title={t('genetics.programs.title')} />
+      <ul class="mt-14 grid border-t border-paper/20 sm:grid-cols-2 lg:mt-20 lg:grid-cols-4">
+        {programs.map(([title, desc, intent]) => (
+          <li class="flex flex-col border-b border-paper/20 py-8 sm:px-6 sm:odd:pl-0 lg:border-b-0 lg:border-r lg:px-8 lg:py-10 lg:odd:pl-8 lg:first:pl-0 lg:last:border-r-0 lg:last:pr-0">
+            <h3 class="text-3xl leading-tight">{t(title)}</h3>
+            <p class="mt-4 flex-1 leading-relaxed text-paper/75">{t(desc)}</p>
+            <WaButton intent={intent} lang={lang} variant="light" size="sm" class="mt-8 self-start">{t('cta.whatsapp')}</WaButton>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <!-- AI results -->
+  <section class="container-x grid gap-16 py-24 lg:grid-cols-[1.25fr_minmax(0,22rem)] lg:gap-24 lg:py-36">
+    <div class="min-w-0">
+      <SectionHead title={t('genetics.results.title')} lead={t('genetics.results.lead')} meta="Nelore · IA" />
+      <p class="mt-12 flex items-baseline gap-4 border-t border-ink/20 pt-6">
+        <span class="num font-display text-7xl leading-none text-achiote lg:text-[6.5rem]">{fmt(aiTotal)}<span class="text-[0.5em]">%</span></span>
+        <span class="max-w-[16ch] text-ink-soft">{t('genetics.results.total')}</span>
+      </p>
+      <table class="mt-10 w-full text-left">
+        <caption class="sr-only">{t('genetics.results.title')}</caption>
+        <thead class="label border-b border-ink/25 text-ink-soft">
+          <tr><th scope="col" class="py-3 pr-4 font-semibold">{t('genetics.results.bull')}</th><th scope="col" class="hidden py-3 pr-4 font-semibold sm:table-cell">{t('genetics.results.pedigree')}</th><th scope="col" class="py-3 text-right font-semibold">{t('genetics.results.rate')}</th></tr>
+        </thead>
+        <tbody>
+          {aiResults.map((r) => (
+            <tr class="border-b border-ink/12 align-top">
+              <th scope="row" class="py-5 pr-4 font-normal">
+                <span class="font-display text-2xl">{r.name}</span>
+                <span class="num mt-0.5 block text-sm text-ink-soft">{r.rgn}</span>
+                <span class="mt-1 block text-sm text-ink-soft sm:hidden">{r.pedigree}</span>
+              </th>
+              <td class="hidden py-5 pr-4 text-ink-soft sm:table-cell">{r.pedigree}</td>
+              <td class="py-5 text-right">
+                <span class="num font-display text-3xl">{fmt(r.rate)}%</span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    <VideoPlayer id="genio-semen" title="Genio FIV Urucú · ApexGen" credit="@apexgen.bolivia" class="mx-auto w-full max-w-sm self-center" />
+  </section>
+</Base>

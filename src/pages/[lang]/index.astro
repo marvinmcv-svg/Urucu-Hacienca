@@ -1,0 +1,67 @@
+---
+import { Image } from 'astro:assets';
+import Base from '../../layouts/Base.astro';
+import SectionHead from '../../components/SectionHead.astro';
+import WaButton from '../../components/WaButton.astro';
+import LinkButton from '../../components/LinkButton.astro';
+import AnimalCard from '../../components/AnimalCard.astro';
+import Icon from '../../components/Icon.astro';
+import HomeHero from '../../components/HomeHero.astro';
+import HomeReel from '../../components/HomeReel.astro';
+import { locales, href, useT, type Locale } from '../../i18n/ui';
+import { animals } from '../../data/animals';
+import { site } from '../../data/site';
+import { upcoming } from '../../data/events';
+import { photo } from '../../lib/media';
+
+export const getStaticPaths = () => locales.map((lang) => ({ params: { lang } }));
+const lang = Astro.params.lang as Locale;
+const t = useT(lang);
+const featured = animals.filter((a) => a.featured);
+const next = upcoming()[0];
+---
+<Base lang={lang} overlay>
+  <link slot="head" rel="preload" as="image" href="/media/film/gate.jpg" fetchpriority="high" />
+
+  <HomeHero lang={lang} />
+  <HomeReel lang={lang} />
+
+  <!-- Featured animals: the catalogue, on dark ground -->
+  <section class="on-ink bg-ink py-24 text-paper lg:py-36">
+    <div class="container-x">
+      <div class="flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
+        <SectionHead tone="paper" title={t('home.featured.title')} />
+        <LinkButton href={href(lang, 'herd')} variant="light" size="sm" class="self-start md:self-auto">{t('cta.herd')}</LinkButton>
+      </div>
+      <div class="mt-14 grid gap-x-6 gap-y-14 sm:grid-cols-2 lg:mt-16 lg:grid-cols-4">
+        {featured.map((a) => <AnimalCard a={a} lang={lang} tone="ink" />)}
+      </div>
+    </div>
+  </section>
+
+  <!-- Visit + next auction -->
+  <section class="container-x grid gap-14 py-24 lg:grid-cols-[1.05fr_1fr] lg:gap-24 lg:py-36">
+    <figure>
+      <div class="overflow-hidden rounded-[2px] bg-paper-deep">
+        <Image src={photo('visita-pesqueria')} alt={t('home.visit.title')} widths={[600, 900, 1200]} sizes="(min-width:1024px) 50vw, 100vw" class="aspect-[4/5] size-full object-cover" />
+      </div>
+      <figcaption class="mt-3 flex items-center gap-2 text-sm text-ink-soft"><Icon name="pin" class="size-4 text-achiote" />{site.location.ranch} · {site.location.area}</figcaption>
+    </figure>
+    <div class="flex flex-col justify-center">
+      <SectionHead title={t('home.visit.title')} meta={t('home.visit.eyebrow')} />
+      <div class="mt-10 flex flex-col gap-3 sm:flex-row">
+        <WaButton intent="visit" lang={lang}>{t('cta.visit')}</WaButton>
+        <LinkButton href={href(lang, 'about')}>{t('nav.about')}</LinkButton>
+      </div>
+      <a href={href(lang, 'auctions')} class="group mt-16 block border-y border-ink/20 py-6">
+        <p class="label text-achiote">{t('auctions.next')}</p>
+        <div class="mt-3 flex items-end justify-between gap-6">
+          {next
+            ? <p class="font-display text-3xl leading-tight">{next.name}</p>
+            : <p class="max-w-md leading-relaxed text-ink-soft">{t('auctions.next_tbd')}</p>}
+          <Icon name="arrow" class="mb-1 size-6 text-achiote transition-transform duration-500 group-hover:translate-x-1" />
+        </div>
+      </a>
+    </div>
+  </section>
+</Base>

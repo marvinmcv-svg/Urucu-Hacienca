@@ -1,0 +1,115 @@
+@import "tailwindcss";
+@import "@fontsource-variable/bodoni-moda/opsz.css";
+@import "@fontsource-variable/bodoni-moda/opsz-italic.css";
+@import "@fontsource-variable/instrument-sans/standard.css";
+
+/*
+  Haciendas Urucú: "stud catalogue" system.
+  Urucú is achiote (annatto), the red-orange dye: that is the signature colour.
+  Ink is the dark green-black of the Chaco monte; paper is sun-bleached bone.
+*/
+@theme {
+  --color-paper: #f2ece1;      /* page ground */
+  --color-paper-deep: #e6dccb; /* alternate bands, image placeholders */
+  --color-ink: #141c17;        /* monte: text and dark grounds */
+  --color-ink-2: #1e2a23;      /* raised surface on dark */
+  --color-ink-soft: #4d544c;   /* secondary text on paper (7.3:1) */
+  --color-achiote: #b8381a;    /* signature: CTAs, numerals, accents (5.4:1 on paper) */
+  --color-achiote-deep: #922b12;
+  --color-ember: #e8835c;      /* achiote for use on ink (6.9:1) */
+  --color-dust: #cdb48c;       /* red-earth dust: secondary on ink */
+  --color-gold: #c9a24a;       /* awards only */
+  --color-wa: #25d366;
+  --color-wa-dark: #0f7a41;
+
+  --font-display: "Bodoni Moda Variable", "Bodoni 72", Didot, ui-serif, serif;
+  --font-sans: "Instrument Sans Variable", ui-sans-serif, system-ui, sans-serif;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@layer base {
+  html {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    scroll-behavior: smooth;
+    scrollbar-color: color-mix(in srgb, var(--color-ink) 35%, transparent) transparent;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    font-family: var(--font-sans);
+    font-size: 1.0625rem;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: "ss01";
+  }
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-optical-sizing: auto;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+  p { text-wrap: pretty; }
+  em { font-style: italic; }
+  a { text-underline-offset: 0.22em; text-decoration-thickness: 1px; }
+  input, textarea { caret-color: var(--color-achiote); }
+  :focus-visible { outline: 2px solid var(--color-achiote); outline-offset: 3px; }
+  .on-ink :focus-visible, .bg-ink :focus-visible { outline-color: var(--color-ember); }
+  ::selection { background: var(--color-achiote); color: var(--color-paper); }
+}
+
+/* Logo accent switches to the light achiote on dark grounds. */
+.on-ink .logo-n, .site-header[data-overlay]:not([data-solid]) .logo-n, .site-header[data-open] .logo-n { color: var(--color-ember); }
+
+/* Small caps-style label in the condensed width of Instrument Sans: data, not decoration. */
+@utility label {
+  font-family: var(--font-sans);
+  font-stretch: 78%;
+  font-size: 0.8125rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+/* Tabular figures for any numbers that line up. */
+@utility num {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+@utility container-x {
+  width: 100%;
+  max-width: 86rem;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+  @media (width >= 48rem) { padding-inline: 2.5rem; }
+  @media (width >= 80rem) { padding-inline: 3.5rem; }
+}
+
+/* Hairline rule in the current text colour. */
+@utility rule {
+  border-color: color-mix(in srgb, currentColor 18%, transparent);
+}
+
+/* Text link with an achiote underline that fills on hover. */
+@utility link-line {
+  text-decoration-line: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 30%, transparent);
+  transition: text-decoration-color .2s, color .2s;
+  &:hover { text-decoration-color: currentColor; }
+}
+
+/* The one authored motion moment: the home headline rises word by word, then the rest fades in. */
+@keyframes rise { from { transform: translateY(105%); } to { transform: none; } }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+.hero-fade { animation: fade 1.2s var(--ease-out-expo) .35s both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-fade { animation: none; }
+  html { scroll-behavior: auto; }
+}
+
+/* Home hero: each word rises from its own mask. */
+.hero-word { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: 0.08em; margin-bottom: -0.08em; margin-right: 0.22em; }
+.hero-word > span { display: inline-block; animation: rise 1.1s var(--ease-out-expo) both; }
+@media (prefers-reduced-motion: reduce) { .hero-word > span { animation: none; } }

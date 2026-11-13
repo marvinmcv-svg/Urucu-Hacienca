@@ -1,0 +1,71 @@
+---
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import CTABand from '../components/CTABand.astro';
+import Concierge from '../components/Concierge.astro';
+import { locales, htmlLang, useT, type Locale } from '../i18n/ui';
+import { site } from '../data/site';
+import ogDefault from '../assets/photos/expocruz-presente.jpg';
+import { getImage } from 'astro:assets';
+
+interface Props { lang: Locale; title?: string; description?: string; image?: ImageMetadata; band?: boolean; jsonLd?: object[]; overlay?: boolean }
+const { lang, title, description, image = ogDefault, band = true, jsonLd = [], overlay = false } = Astro.props;
+const t = useT(lang);
+const fullTitle = title ? `${title} · Haciendas Urucú` : `Haciendas Urucú · ${t('meta.tagline')}`;
+const desc = description ?? t('meta.description');
+
+// Same path in every language: swap the first segment.
+const rest = Astro.url.pathname.split('/').slice(2).join('/');
+const altPaths = Object.fromEntries(locales.map((l) => [l, `/${l}/${rest}`])) as Record<Locale, string>;
+const abs = (p: string) => new URL(p, Astro.site).href;
+const og = await getImage({ src: image, width: 1200, height: 630, fit: 'cover', format: 'jpg' });
+
+const org = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: site.name,
+  slogan: t('meta.tagline'),
+  url: abs(`/${lang}/`),
+  logo: abs('/favicon.svg'),
+  sameAs: [site.instagram, site.facebook],
+  contactPoint: { '@type': 'ContactPoint', telephone: '+59177165787', contactType: 'sales', availableLanguage: ['es', 'en', 'pt'] },
+  address: { '@type': 'PostalAddress', addressLocality: 'San Matías', addressRegion: 'Santa Cruz', addressCountry: 'BO' },
+};
+---
+<!doctype html>
+<html lang={htmlLang[lang]}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={desc} />
+    <link rel="canonical" href={abs(Astro.url.pathname)} />
+    {locales.map((l) => <link rel="alternate" hreflang={htmlLang[l]} href={abs(altPaths[l])} />)}
+    <link rel="alternate" hreflang="x-default" href={abs(altPaths.es)} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="theme-color" content="#141c17" />
+    <slot name="head" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Haciendas Urucú" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={desc} />
+    <meta property="og:image" content={abs(og.src)} />
+    <meta property="og:locale" content={htmlLang[lang].replace('-', '_')} />
+    <meta name="twitter:card" content="summary_large_image" />
+    {[org, ...jsonLd].map((d) => <script type="application/ld+json" set:html={JSON.stringify(d)} />)}
+    <script is:inline>document.documentElement.classList.add('js')</script>
+  </head>
+  <body class="min-h-dvh flex flex-col">
+    <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[60] bg-ink px-4 py-2 text-paper">Skip to content</a>
+    <Header lang={lang} altPaths={altPaths} overlay={overlay} />
+    <main id="main" class="flex-1"><slot /></main>
+    {band && <CTABand lang={lang} />}
+    <Footer lang={lang} />
+    <Concierge lang={lang} />
+    <script>
+      import { inject } from '@vercel/analytics';
+      inject();
+    </script>
+  </body>
+</html>

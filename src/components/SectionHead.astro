@@ -1,0 +1,14 @@
+---
+// Section heading. `meta` is factual context (a place, an event, a date) and is shown under the lead, never as a kicker.
+interface Props { title: string; lead?: string; meta?: string; align?: 'left' | 'center'; tag?: 'h1' | 'h2'; tone?: 'ink' | 'paper'; size?: 'lg' | 'md' }
+const { title, lead, meta, align = 'left', tag: Tag = 'h2', tone = 'ink', size = 'lg' } = Astro.props;
+const onInk = tone === 'paper';
+---
+<header class:list={['max-w-3xl', align === 'center' && 'mx-auto text-center']}>
+  <Tag class:list={[
+    size === 'lg' ? 'text-[2.4rem] sm:text-5xl lg:text-[4.25rem]' : 'text-3xl sm:text-4xl lg:text-5xl',
+    'leading-[1.02]', onInk ? 'text-paper' : 'text-ink',
+  ]}>{title}</Tag>
+  {lead && <p class:list={['mt-6 max-w-[38rem] text-lg leading-relaxed', align === 'center' && 'mx-auto', onInk ? 'text-paper/80' : 'text-ink-soft']}>{lead}</p>}
+  {meta && <p class:list={['label mt-6', onInk ? 'text-dust' : 'text-achiote']}>{meta}</p>}
+</header>

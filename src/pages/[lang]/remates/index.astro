@@ -1,0 +1,73 @@
+---
+import Base from '../../../layouts/Base.astro';
+import PageHero from '../../../components/PageHero.astro';
+import SectionHead from '../../../components/SectionHead.astro';
+import WaButton from '../../../components/WaButton.astro';
+import Icon from '../../../components/Icon.astro';
+import { locales, href, useT, type Locale } from '../../../i18n/ui';
+import { upcoming, past } from '../../../data/events';
+import { site } from '../../../data/site';
+import { posterSrc, videoSrc } from '../../../lib/media';
+
+export const getStaticPaths = () => locales.map((lang) => ({ params: { lang } }));
+const lang = Astro.params.lang as Locale;
+const t = useT(lang);
+const next = upcoming();
+const recent = past();
+const date = (iso: string) => new Date(iso).toLocaleDateString(lang, { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/La_Paz' });
+const time = (iso: string) => new Date(iso).toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit', timeZone: 'America/La_Paz' });
+const eventLd = [...next, ...recent].filter((e) => e.kind === 'auction').map((e) => ({
+  '@context': 'https://schema.org', '@type': 'Event', name: e.name, startDate: e.date,
+  eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode', eventStatus: 'https://schema.org/EventScheduled',
+  location: { '@type': 'Place', name: e.venue, address: { '@type': 'PostalAddress', addressLocality: 'Santa Cruz de la Sierra', addressCountry: 'BO' } },
+  organizer: { '@type': 'Organization', name: 'Haciendas Urucú', url: new URL(`/${lang}/`, Astro.site).href },
+}));
+---
+<Base lang={lang} title={t('auctions.title')} description={t('auctions.lead')} jsonLd={eventLd}>
+  <PageHero label={t('auctions.eyebrow')} title={t('auctions.title')} lead={t('auctions.lead')} />
+
+  <section class="container-x">
+    <div class="on-ink relative overflow-hidden rounded-[2px] bg-ink text-paper">
+      <div class="grid gap-10 p-7 sm:p-12 lg:grid-cols-[1fr_auto] lg:items-end lg:p-16">
+        <div>
+          <p class="label text-ember">{t('auctions.next')}</p>
+          {next.length
+            ? next.map((e) => <h2 class="mt-4 text-4xl leading-none sm:text-6xl">{e.name}</h2><p class="num mt-4 text-paper/80">{date(e.date)} · {time(e.date)} · {e.venue}</p>)
+            : <p class="mt-4 max-w-2xl font-display text-[2rem] leading-[1.1] sm:text-5xl">{t('auctions.next_tbd')}</p>}
+          <p class="mt-6 flex items-center gap-2 text-paper/70"><Icon name="pin" class="size-4 text-dust" />{site.auctionVenue}</p>
+        </div>
+        <WaButton intent="lot" lang={lang} vars={{ lot: next[0]?.name ?? (lang === 'en' ? 'your next auction' : lang === 'pt' ? 'o próximo leilão' : 'el próximo remate') }} class="w-full sm:w-auto">{t('cta.notify_auction')}</WaButton>
+      </div>
+    </div>
+  </section>
+
+  <section class="container-x py-24 lg:py-36">
+    <SectionHead title={t('auctions.past')} size="md" />
+    <ol class="mt-12 border-t border-ink/25">
+      {recent.map((e) => (
+        <li class="grid gap-5 border-b border-ink/15 py-9 md:grid-cols-[11rem_1fr_auto] md:gap-10">
+          <p class="label num pt-2 text-achiote">{date(e.date)}</p>
+          <div>
+            <h3 class="text-3xl leading-tight">{e.name}</h3>
+            <p class="mt-2 text-ink-soft">{e.venue}{e.kind === 'show' ? ' · Expo' : ''}</p>
+            {e.note && <p class="mt-3 max-w-2xl leading-relaxed text-ink-soft">{e.note[lang]}</p>}
+            {e.lots?.length && (
+              <ul class="mt-4 grid gap-2">
+                {e.lots.map((l) => (
+                  <li class="flex items-baseline gap-3">{l.lot && <span class="label num shrink-0 border border-ink/25 px-2 py-0.5 text-xs">{t('auctions.lot')} {l.lot}</span>}
+                    {l.slug ? <a class="link-line font-medium hover:text-achiote" href={href(lang, `plantel/${l.slug}/`)}>{l.animal}</a> : <span>{l.animal}</span>}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+          {e.video && (
+            <a href={videoSrc(e.video)} target="_blank" rel="noopener" class="group relative block w-32 overflow-hidden rounded-[2px] bg-ink" aria-label={`${t('video.play')}: ${e.name}`}>
+              <img src={posterSrc(e.video)} alt="" loading="lazy" class="aspect-[3/4] w-full object-cover opacity-90 transition-transform duration-700 group-hover:scale-105" />
+              <span aria-hidden="true" class="absolute inset-0 grid place-items-center"><span class="grid size-11 place-items-center rounded-full bg-paper/95 text-ink"><Icon name="play" class="ml-0.5 size-4" /></span></span>
+            </a>
+          )}
+        </li>
+      ))}
+    </ol>
+  </section>
+</Base>

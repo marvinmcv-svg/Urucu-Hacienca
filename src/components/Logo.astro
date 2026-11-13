@@ -1,0 +1,14 @@
+---
+// Wordmark recreated from the Instagram avatar. Inherits colour from its parent. TODO(client): replace with the official vector logo.
+interface Props { class?: string }
+const { class: cls = '' } = Astro.props;
+---
+<span class:list={['inline-flex flex-col items-center leading-none select-none', cls]} role="img" aria-label="Haciendas Urucú">
+  <span aria-hidden="true" class="font-sans text-[0.5em] font-semibold tracking-[0.42em] pl-[0.42em] [font-stretch:80%]">HACIENDAS</span>
+  <span aria-hidden="true" class="font-display text-[1.65em] font-semibold tracking-[0.05em] mt-[0.08em]">URUCÚ</span>
+  <span aria-hidden="true" class="mt-[0.2em] flex w-full items-center gap-[0.4em]">
+    <span class="h-px flex-1 bg-current opacity-40"></span>
+    <span class="font-display text-[0.6em] font-semibold logo-n text-achiote">N</span>
+    <span class="h-px flex-1 bg-current opacity-40"></span>
+  </span>
+</span>

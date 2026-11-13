@@ -1,0 +1,34 @@
+---
+// A catalogue entry: photo, then a ruled data block like a stud-sale lot listing.
+import { Image } from 'astro:assets';
+import Icon from './Icon.astro';
+import type { Animal } from '../data/animals';
+import { breeds } from '../data/site';
+import { photo, posterSrc } from '../lib/media';
+import { href, useT, type Locale } from '../i18n/ui';
+interface Props { a: Animal; lang: Locale; level?: 'h2' | 'h3'; tone?: 'paper' | 'ink' }
+const { a, lang, level: H = 'h3', tone = 'paper' } = Astro.props;
+const t = useT(lang);
+const breed = breeds.find((b) => b.id === a.breed)!.name[lang];
+const award = a.awards?.[0]?.[lang].split(/[·,]/)[0].trim();
+const [sire, ...damParts] = a.pedigree.split(' × ');
+const dam = damParts.join(' × ');
+---
+<article data-breed={a.breed} class="group relative flex flex-col">
+  <div class="relative aspect-[4/5] overflow-hidden rounded-[2px] bg-paper-deep">
+    {a.photo
+      ? <Image src={photo(a.photo)} alt={a.name} widths={[400, 640, 900]} sizes="(min-width:1024px) 25vw, (min-width:640px) 50vw, 100vw" class="size-full object-cover transition-transform duration-[1.2s] ease-[var(--ease-out-expo)] group-hover:scale-[1.04]" />
+      : <img src={posterSrc(a.video!)} alt={a.name} loading="lazy" decoding="async" class="size-full object-cover transition-transform duration-[1.2s] ease-[var(--ease-out-expo)] group-hover:scale-[1.04]" />}
+    {award && <p class="absolute inset-x-0 bottom-0 flex items-center gap-2 bg-[linear-gradient(to_top,rgb(20_28_23/0.85),transparent)] px-4 pb-3.5 pt-10 text-[0.8125rem] font-semibold text-gold"><Icon name="award" class="size-4" />{award}</p>}
+  </div>
+  <div class:list={['mt-4 flex items-baseline justify-between gap-3 border-t pt-3', tone === 'ink' ? 'border-paper/20' : 'border-ink/20']}>
+    <p class:list={['label', tone === 'ink' ? 'text-ember' : 'text-achiote']}>{breed} · {t(`role.${a.role}`)}</p>
+    {a.rgn && <p class:list={['num text-xs', tone === 'ink' ? 'text-paper/60' : 'text-ink-soft']}>{a.rgn}</p>}
+  </div>
+  <H class="mt-2 text-[1.6rem] leading-[1.1]">
+    <a href={href(lang, `plantel/${a.slug}/`)} class="after:absolute after:inset-0 group-hover:underline decoration-1 underline-offset-[0.18em]">{a.name}</a>
+  </H>
+  <p class:list={['mt-2 text-[0.9375rem] leading-snug', tone === 'ink' ? 'text-paper/70' : 'text-ink-soft']}>
+    {sire}{dam && <><span class:list={['px-1 font-display italic', tone === 'ink' ? 'text-ember' : 'text-achiote']}>×</span>{dam}</>}
+  </p>
+</article>

@@ -1,0 +1,213 @@
+---
+// The story reel: five chapters, each a vertical film shown whole beside one word and one line.
+// Scroll moves the film strip; the active chapter's text crossfades in. Chapter names jump to a chapter.
+// Desktop: text left, strip right. Phones/portrait: text on top, strip below, active film centred.
+// Without JS or with reduced motion: a swipeable row of films with their captions.
+import { href, useT, type Locale } from '../i18n/ui';
+import { aiTotal, breeds } from '../data/site';
+interface Props { lang: Locale }
+const { lang } = Astro.props;
+const t = useT(lang);
+const fmt = (n: number) => n.toLocaleString(lang, { maximumFractionDigits: 2 });
+const breed = (id: string) => breeds.find((b) => b.id === id)!;
+const chapters = [
+  { id: 'campo', word: t('home.ch.field'), line: t('home.ch.field_d'), cap: 'Hacienda Pesquería', to: href(lang, 'about') },
+  { id: 'nelore-close', word: breed('nelore').name[lang], line: breed('nelore').text[lang], cap: 'Galáctico FIV Urucú', to: `${href(lang, 'genetics')}#nelore` },
+  { id: 'sindi-close', word: breed('sindi').name[lang], line: breed('sindi').text[lang], cap: 'Amira de Rincón del Urucú', to: `${href(lang, 'genetics')}#sindi` },
+  { id: 'fertilidad', word: t('home.ch.fertility'), figure: `${fmt(aiTotal)}%`, line: t('home.proof.pregnancy'), cap: 'Hacienda Pesquería', to: href(lang, 'genetics') },
+  { id: 'campeones', word: t('home.ch.champions'), line: `${t('home.proof.champion')} · FexpoSIV 2026`, cap: 'FexpoSIV 2026', to: href(lang, 'herd') },
+];
+const n = chapters.length;
+---
+<section id="reel" data-hide-dock data-header-dark class="rl on-ink relative bg-ink text-paper" style={`--n:${n}`} aria-label={t('home.proof.title')}>
+  <div class="rl-stage">
+    <p class="rl-place label">{t('home.ch.label')}</p>
+
+    <div class="rl-texts">
+      {chapters.map((c, i) => (
+        <div class="rl-text" data-i={i}>
+          {c.figure && <p class="rl-fig num">{c.figure}</p>}
+          <h2 class="rl-word">{c.word}</h2>
+          <p class="rl-line">{c.line}</p>
+        </div>
+      ))}
+    </div>
+
+    <div class="rl-viewport">
+      <ol class="rl-track">
+        {chapters.map((c, i) => (
+          <li class="rl-card" data-i={i}>
+            <a href={c.to} class="rl-film" tabindex="-1" aria-label={c.word}>
+              <video muted loop playsinline preload="none" poster={`/media/film/${c.id}.jpg`} aria-hidden="true"><source src={`/media/film/${c.id}.mp4`} type="video/mp4" /></video>
+              <span class="rl-cap">{c.cap}</span>
+            </a>
+            <div class="rl-card-copy">
+              {c.figure && <p class="rl-fig num">{c.figure}</p>}
+              <h2 class="rl-word">{c.word}</h2>
+              <p class="rl-line">{c.line}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
+
+    <nav class="rl-nav" aria-label={t('home.proof.title')}>
+      <ol>
+        {chapters.map((c, i) => <li><button type="button" data-go={i}>{c.word}</button></li>)}
+      </ol>
+      <i class="rl-bar" aria-hidden="true"><b></b></i>
+    </nav>
+  </div>
+</section>
+
+<style is:global>
+  /* ---------- Baseline (no JS / reduced motion): a swipeable row ---------- */
+  .rl { --ch: min(70svh, 34rem); --cw: calc(var(--ch) * 9 / 16); padding: 6rem 0 4rem; }
+  .rl-place { padding-inline: 1.25rem; color: var(--color-dust); }
+  .rl-texts, .rl-nav { display: none; }
+  .rl-viewport { overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; margin-top: 2rem; }
+  .rl-track { display: flex; gap: 1.25rem; padding: 0 1.25rem; width: max-content; }
+  .rl-card { scroll-snap-align: start; width: var(--cw); }
+  .rl-film { position: relative; display: block; width: var(--cw); aspect-ratio: 9 / 16; overflow: hidden; border-radius: 6px; background: var(--color-ink-2); }
+  .rl-film video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .rl-cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 2.5rem .9rem .8rem; font-family: var(--font-sans); font-stretch: 78%; font-size: .75rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--color-paper); background: linear-gradient(to top, rgb(20 28 23 / .75), transparent); }
+  .rl-card-copy { margin-top: 1rem; }
+  .rl-word { font-size: 2.5rem; line-height: .95; letter-spacing: -0.02em; }
+  .rl-fig { font-family: var(--font-display); font-size: 3rem; line-height: 1; color: var(--color-ember); margin-bottom: .25rem; }
+  .rl-line { margin-top: .75rem; color: rgb(242 236 225 / .8); line-height: 1.45; }
+
+  /* ---------- Cinematic (JS adds .cine) ---------- */
+  .cine .rl { height: calc(100svh + (var(--n) - 1) * 75svh); padding: 0; }
+  .cine .rl-stage { position: sticky; top: 0; height: 100svh; overflow: hidden; }
+  .cine .rl-place { position: absolute; top: 5.5rem; left: 0; right: 0; padding-inline: var(--pad); }
+  .cine .rl-texts { display: grid; position: absolute; }
+  .cine .rl-text { grid-area: 1 / 1; will-change: opacity, transform; }
+  .cine .rl-card-copy { display: none; }
+  .cine .rl-viewport { position: absolute; overflow: hidden; margin: 0; display: flex; align-items: center; scroll-snap-type: none; }
+  .cine .rl-track { padding: 0; gap: var(--gap); will-change: transform; }
+  .cine .rl-card { will-change: transform, opacity; }
+  .cine .rl-film { box-shadow: 0 40px 70px -30px rgb(0 0 0 / .8); }
+  .cine .rl-nav { display: block; position: absolute; }
+  .rl-nav ol { display: flex; gap: .25rem; }
+  .rl-nav button { min-height: 2.75rem; padding: 0 .75rem 0 0; font-size: .9375rem; color: rgb(242 236 225 / .5); transition: color .3s; }
+  .rl-nav button:hover { color: var(--color-paper); }
+  .rl-nav button[aria-current] { color: var(--color-paper); }
+  .rl-bar { display: block; height: 2px; margin-top: .25rem; background: rgb(242 236 225 / .18); }
+  .rl-bar b { display: block; height: 100%; background: var(--color-ember); transform-origin: left; transform: scaleX(0); }
+
+  .rl { --pad: 1.25rem; }
+  @media (min-width: 48rem) { .rl { --pad: 2.5rem; } }
+  @media (min-width: 80rem) { .rl { --pad: max(3.5rem, calc((100vw - 86rem) / 2 + 3.5rem)); } }
+
+  /* phones / portrait: text above, strip below with the active film centred */
+  .cine .rl { --ch: clamp(14rem, calc(100svh - 21.5rem), 42rem); --gap: 1rem; }
+  .cine .rl-texts { top: 7.25rem; left: var(--pad); right: var(--pad); }
+  .cine .rl-word { font-size: min(calc((100vw - 2 * var(--pad)) / 6.2), 4rem); }
+  .cine .rl-fig { font-size: clamp(2.2rem, 9vw, 3.2rem); }
+  .cine .rl-line { font-size: 1rem; max-width: 34ch; margin-top: .6rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .cine .rl-viewport { left: 0; right: 0; top: 16.5rem; bottom: 3.75rem; }
+  .cine .rl-track { padding-left: calc(50vw - var(--cw) / 2); }
+  .cine .rl-nav { left: var(--pad); right: var(--pad); bottom: 1.25rem; }
+  .cine .rl-nav ol { display: none; }
+
+  @media (min-width: 40rem) {
+    .cine .rl-nav ol { display: flex; }
+    .cine .rl-nav { bottom: .75rem; }
+  }
+
+  /* landscape (desktop, landscape tablets and phones): text left, strip right */
+  @media (min-width: 40rem) and (orientation: landscape) {
+    .cine .rl { --ch: min(calc(100svh - 12rem), 44rem); --gap: clamp(1rem, 2vw, 2rem); --tw: min(36vw, 32rem); }
+    .cine .rl-place { top: 6rem; padding-inline: var(--pad); }
+    .cine .rl-texts { top: calc(50% + 2rem); left: var(--pad); right: auto; width: var(--tw); translate: 0 -50%; }
+    /* sized to the text column: the longest chapter word ("Fertilidade") is about 6em wide */
+    .cine .rl-word { font-size: min(calc(var(--tw) / 6.2), 12svh, 8rem); }
+    .cine .rl-fig { font-size: min(calc(var(--tw) / 6.5), 9svh, 6rem); }
+    .cine .rl-line { font-size: 1.1875rem; margin-top: 1.25rem; -webkit-line-clamp: 4; }
+    .cine .rl-viewport { left: calc(var(--pad) + var(--tw) + 1rem); right: 0; top: 4.5rem; bottom: 3.5rem; }
+    .cine .rl-track { padding-left: 2rem; }
+    .cine .rl-nav { left: var(--pad); right: auto; width: var(--tw); bottom: 1.5rem; }
+  }
+  @media (orientation: landscape) and (max-height: 32rem) {
+    .cine .rl-line { -webkit-line-clamp: 2; font-size: .9375rem; margin-top: .5rem; }
+    .cine .rl-place { display: none; }
+    .cine .rl-nav ol { display: none; }
+  }
+</style>
+
+<script>
+  import { want, warm, clamp, reducedMotion } from '../lib/film';
+  const reel = document.getElementById('reel')!;
+  const track = reel.querySelector<HTMLElement>('.rl-track')!;
+  const cards = [...reel.querySelectorAll<HTMLElement>('.rl-card')];
+  const texts = [...reel.querySelectorAll<HTMLElement>('.rl-text')];
+  const films = cards.map((c) => c.querySelector('video')!);
+  const navBtns = [...reel.querySelectorAll<HTMLButtonElement>('[data-go]')];
+  const bar = reel.querySelector<HTMLElement>('.rl-bar b')!;
+  const links = cards.map((c) => c.querySelector<HTMLAnchorElement>('.rl-film')!);
+  const n = cards.length;
+  const desk = matchMedia('(min-width: 40rem) and (orientation: landscape)'); // side-by-side layout
+
+  if (reducedMotion()) {
+    // Plain row: play a film while it is on screen.
+    const io = new IntersectionObserver((es) => es.forEach((e) => want(e.target as HTMLVideoElement, e.isIntersecting)), { threshold: 0.6 });
+    films.forEach((v) => io.observe(v));
+    links.forEach((a) => a.removeAttribute('tabindex'));
+  } else {
+    document.documentElement.classList.add('cine');
+    let step = 0, H = 0, raf = 0, visible = false;
+    const measure = () => {
+      H = innerHeight;
+      const gap = parseFloat(getComputedStyle(track).columnGap) || 0;
+      step = cards[0].offsetWidth + gap;
+      frame();
+    };
+    // 0 → n-1 across the pinned scroll, with a short hold at both ends
+    const active = () => {
+      const r = reel.getBoundingClientRect();
+      const q = clamp(-r.top / (r.height - H || 1));
+      return clamp((q - 0.04) / 0.92) * (n - 1);
+    };
+    function frame() {
+      raf = 0;
+      const a = active();
+      const d = desk.matches;
+      track.style.transform = `translate3d(${-a * step}px, 0, 0)`;
+      cards.forEach((c, i) => {
+        const k = i - a;
+        const past = clamp(-k), ahead = clamp(k);
+        const s = 1 - past * 0.12 - ahead * (d ? 0.1 : 0.14);
+        const o = 1 - past * 0.92 - clamp(k / 2.5) * (d ? 0.5 : 0.6);
+        c.style.transform = `scale(${s})`;
+        c.style.transformOrigin = d ? '0% 50%' : '50% 50%';
+        c.style.opacity = String(clamp(o));
+        const near = Math.abs(k) < 0.6;
+        want(films[i], visible && near);
+        if (Math.abs(k) < 1.6) warm(films[i]);
+        links[i].tabIndex = near ? 0 : -1;
+      });
+      texts.forEach((el, i) => {
+        const k = i - a;
+        const o = clamp(1 - Math.abs(k) * 2.4);
+        el.style.opacity = String(o);
+        el.style.transform = `translate3d(0, ${k * 44}px, 0)`;
+        el.style.visibility = o > 0 ? 'visible' : 'hidden';
+        el.setAttribute('aria-hidden', String(o < 0.5));
+      });
+      const cur = Math.round(a);
+      navBtns.forEach((b, i) => b.toggleAttribute('aria-current', i === cur));
+      bar.style.transform = `scaleX(${a / (n - 1)})`;
+    }
+    const kick = () => { if (!raf) raf = requestAnimationFrame(frame); };
+    new IntersectionObserver(([e]) => { visible = e.isIntersecting; kick(); }).observe(reel);
+    addEventListener('scroll', kick, { passive: true });
+    addEventListener('resize', measure);
+    // Jump to a chapter.
+    navBtns.forEach((b) => b.addEventListener('click', () => {
+      const i = Number(b.dataset.go);
+      const top = reel.offsetTop + (0.04 + (i / (n - 1)) * 0.92) * (reel.offsetHeight - H);
+      scrollTo({ top, behavior: 'smooth' });
+    }));
+    measure();
+  }
+</script>

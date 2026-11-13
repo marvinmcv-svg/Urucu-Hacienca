@@ -1,0 +1,59 @@
+---
+import { Image } from 'astro:assets';
+import Base from '../../../layouts/Base.astro';
+import WaButton from '../../../components/WaButton.astro';
+import VideoPlayer from '../../../components/VideoPlayer.astro';
+import AnimalCard from '../../../components/AnimalCard.astro';
+import Icon from '../../../components/Icon.astro';
+import { locales, href, useT, type Locale } from '../../../i18n/ui';
+import { animals, type Animal } from '../../../data/animals';
+import { breeds } from '../../../data/site';
+import { photo } from '../../../lib/media';
+
+export const getStaticPaths = () => locales.flatMap((lang) => animals.map((a) => ({ params: { lang, slug: a.slug }, props: { a } })));
+const lang = Astro.params.lang as Locale;
+const { a } = Astro.props as { a: Animal };
+const t = useT(lang);
+const breed = breeds.find((b) => b.id === a.breed)!.name[lang];
+const born = a.born && new Date(`${a.born}T12:00:00`).toLocaleDateString(lang, { day: 'numeric', month: 'long', year: 'numeric' });
+const more = animals.filter((x) => x.slug !== a.slug && x.breed === a.breed).slice(0, 4);
+const row = 'grid gap-1 py-4 sm:grid-cols-[9rem_1fr] sm:gap-4';
+---
+<Base lang={lang} title={a.name} description={a.text[lang]} image={a.photo ? photo(a.photo) : undefined}>
+  <article class="container-x grid gap-12 pb-24 pt-8 lg:grid-cols-2 lg:gap-24 lg:pb-36 lg:pt-14">
+    <div class="grid content-start gap-6">
+      <a href={href(lang, 'herd')} class="inline-flex min-h-11 items-center gap-2 self-start text-[0.9375rem] font-semibold hover:text-achiote lg:hidden"><Icon name="arrow-left" />{t('herd.back')}</a>
+      {a.photo && (
+        <div class="overflow-hidden rounded-[2px] bg-paper-deep">
+          <Image src={photo(a.photo)} alt={a.name} widths={[600, 900, 1300]} sizes="(min-width:1024px) 50vw, 100vw" loading="eager" fetchpriority="high" class="w-full object-cover" />
+        </div>
+      )}
+      {a.video && <VideoPlayer id={a.video} title={a.name} credit={a.credit} class:list={[a.photo ? 'max-w-xs' : 'mx-auto w-full max-w-md']} />}
+    </div>
+    <div class="lg:sticky lg:top-28 lg:self-start">
+      <a href={href(lang, 'herd')} class="hidden min-h-11 items-center gap-2 text-[0.9375rem] font-semibold hover:text-achiote lg:inline-flex"><Icon name="arrow-left" />{t('herd.back')}</a>
+      <h1 class="text-5xl leading-[0.98] sm:text-6xl lg:mt-10 lg:text-[5rem]">{a.name}</h1>
+      <p class="mt-5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <span class="label text-achiote">{breed} · {t(`role.${a.role}`)} · {t(`sex.${a.sex}`)}</span>
+        {a.rgn && <span class="num text-sm text-ink-soft">RGN {a.rgn}</span>}
+      </p>
+      <p class="mt-8 text-lg leading-relaxed text-ink-soft">{a.text[lang]}</p>
+      <dl class="mt-10 border-t border-ink/25">
+        <div class:list={[row, 'border-b border-ink/12']}><dt class="label pt-1 text-ink-soft">{t('herd.pedigree')}</dt><dd class="font-display text-xl leading-snug">{a.pedigree}</dd></div>
+        {born && <div class:list={[row, 'border-b border-ink/12']}><dt class="label pt-1 text-ink-soft">{t('herd.born')}</dt><dd class="num">{born}</dd></div>}
+        {a.status && <div class:list={[row, 'border-b border-ink/12']}><dt class="label pt-1 text-ink-soft">{t('herd.status')}</dt><dd>{a.status[lang]}</dd></div>}
+        {a.awards?.length && <div class:list={[row, 'border-b border-ink/12']}><dt class="label pt-1 text-ink-soft">{t('herd.awards')}</dt>
+          <dd><ul class="grid gap-2">{a.awards.map((w) => <li class="flex gap-2.5"><Icon name="award" class="mt-1 size-4 text-gold" />{w[lang]}</li>)}</ul></dd></div>}
+      </dl>
+      <WaButton intent="animal" lang={lang} vars={{ animal: a.rgn ? `${a.name} (${a.rgn})` : a.name }} class="mt-10 w-full sm:w-auto">{t('cta.ask_animal')}</WaButton>
+    </div>
+  </article>
+  {more.length > 0 && (
+    <section class="on-ink bg-ink py-24 text-paper lg:py-32">
+      <div class="container-x">
+        <h2 class="text-4xl lg:text-5xl">{t('home.featured.title')}</h2>
+        <div class="mt-12 grid gap-x-6 gap-y-14 sm:grid-cols-2 lg:grid-cols-4">{more.map((x) => <AnimalCard a={x} lang={lang} tone="ink" />)}</div>
+      </div>
+    </section>
+  )}
+</Base>

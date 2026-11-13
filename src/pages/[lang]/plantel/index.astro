@@ -1,0 +1,66 @@
+---
+import Base from '../../../layouts/Base.astro';
+import PageHero from '../../../components/PageHero.astro';
+import AnimalCard from '../../../components/AnimalCard.astro';
+import SectionHead from '../../../components/SectionHead.astro';
+import Icon from '../../../components/Icon.astro';
+import { Image } from 'astro:assets';
+import { locales, useT, type Locale } from '../../../i18n/ui';
+import { animals } from '../../../data/animals';
+import { breeds, awards2026 } from '../../../data/site';
+import { photo } from '../../../lib/media';
+
+export const getStaticPaths = () => locales.map((lang) => ({ params: { lang } }));
+const lang = Astro.params.lang as Locale;
+const t = useT(lang);
+const present = breeds.filter((b) => animals.some((a) => a.breed === b.id));
+const count = (id?: string) => animals.filter((a) => !id || a.breed === id).length;
+---
+<Base lang={lang} title={t('herd.title')} description={t('herd.lead')} image={photo('gran-campeona-ternera')}>
+  <PageHero label={t('herd.eyebrow')} title={t('herd.title')} lead={t('herd.lead')} />
+
+  <section class="container-x pb-24 lg:pb-36">
+    <div role="group" aria-label={t('herd.filter.label')} id="herd-filter" class="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0">
+      <button type="button" data-filter="all" aria-pressed="true" class="filter-btn">{t('herd.filter.all')}<span class="num">{count()}</span></button>
+      {present.map((b) => <button type="button" data-filter={b.id} aria-pressed="false" class="filter-btn">{b.name[lang]}<span class="num">{count(b.id)}</span></button>)}
+    </div>
+    <div id="herd-grid" class="mt-12 grid gap-x-6 gap-y-16 sm:grid-cols-2 lg:grid-cols-4">
+      {animals.map((a) => <AnimalCard a={a} lang={lang} level="h2" />)}
+    </div>
+  </section>
+
+  <section class="on-ink bg-ink text-paper">
+    <div class="container-x grid gap-14 py-24 lg:grid-cols-[0.9fr_1.1fr] lg:gap-24 lg:py-36">
+      <div class="overflow-hidden rounded-[2px]">
+        <Image src={photo('fexposiv-podio')} alt="FexpoSIV 2026" widths={[600, 900, 1300]} sizes="(min-width:1024px) 45vw, 100vw" class="size-full object-cover" />
+      </div>
+      <div>
+        <SectionHead tone="paper" title={t('herd.awards.title')} />
+        {awards2026.map((g) => (
+          <div class="mt-12">
+            <h3 class="label flex items-center gap-2 text-gold"><Icon name="award" class="size-4" />{g.event}</h3>
+            <ul class="mt-4 border-t border-paper/20">
+              {g.items.map((i) => <li class="border-b border-paper/20 py-4 font-display text-xl leading-snug text-paper/95">{i[lang]}</li>)}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style is:global>
+  .filter-btn { display: inline-flex; flex-shrink: 0; align-items: center; gap: .6rem; min-height: 2.75rem; border-radius: 3px; border: 1px solid color-mix(in srgb, var(--color-ink) 25%, transparent); padding: 0 1.1rem; font-size: .9375rem; font-weight: 600; transition: background-color .2s, color .2s, border-color .2s; }
+  .filter-btn .num { font-size: .75rem; opacity: .6; }
+  .filter-btn:hover { border-color: var(--color-ink); }
+  .filter-btn[aria-pressed="true"] { background: var(--color-ink); color: var(--color-paper); border-color: var(--color-ink); }
+</style>
+<script>
+  const btns = document.querySelectorAll<HTMLButtonElement>('#herd-filter [data-filter]');
+  const cards = document.querySelectorAll<HTMLElement>('#herd-grid [data-breed]');
+  btns.forEach((b) => b.addEventListener('click', () => {
+    const f = b.dataset.filter!;
+    btns.forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    cards.forEach((c) => { c.hidden = f !== 'all' && c.dataset.breed !== f; });
+  }));
+</script>

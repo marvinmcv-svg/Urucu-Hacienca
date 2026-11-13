@@ -1,0 +1,28 @@
+---
+import { Image } from 'astro:assets';
+import { photo } from '../lib/media';
+// `label` names the section (it matches the nav); it sits at the foot of the hero as a wayfinding line, not above the title.
+interface Props { label: string; title: string; lead?: string; image?: string; position?: string }
+const { label, title, lead, image, position = '50% 50%' } = Astro.props;
+---
+{image ? (
+  <section class="on-ink relative isolate overflow-hidden bg-ink text-paper">
+    <Image src={photo(image)} alt="" widths={[800, 1400, 2000]} sizes="100vw" loading="eager" fetchpriority="high" class="absolute inset-0 -z-10 size-full object-cover" style={`object-position:${position}`} />
+    <div class="absolute inset-0 -z-10 bg-[linear-gradient(to_top,rgb(20_28_23/0.92),rgb(20_28_23/0.45)_55%,rgb(20_28_23/0.35))]"></div>
+    <div class="container-x flex min-h-[72svh] flex-col justify-end pb-12 pt-36 lg:min-h-[80svh] lg:pb-16">
+      <h1 class="max-w-5xl text-[2.9rem] leading-[0.98] sm:text-6xl lg:text-[6rem]">{title}</h1>
+      <div class="mt-10 grid gap-6 border-t border-paper/25 pt-6 lg:grid-cols-[1fr_minmax(0,36rem)]">
+        <p class="label text-dust">{label}</p>
+        {lead && <p class="text-lg leading-relaxed text-paper/85">{lead}</p>}
+      </div>
+    </div>
+  </section>
+) : (
+  <section class="container-x pb-14 pt-16 lg:pb-20 lg:pt-24">
+    <h1 class="max-w-5xl text-[2.9rem] leading-[0.98] sm:text-6xl lg:text-[6rem]">{title}</h1>
+    <div class="mt-10 grid gap-6 border-t border-ink/15 pt-6 lg:grid-cols-[1fr_minmax(0,36rem)]">
+      <p class="label text-achiote">{label}</p>
+      {lead && <p class="text-lg leading-relaxed text-ink-soft">{lead}</p>}
+    </div>
+  </section>
+)}
