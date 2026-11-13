@@ -1,0 +1,174 @@
+---
+// Home hero. Always exactly one screen tall.
+// Desktop (wide + landscape): headline on the left; three vertical films fanned on the right, shown whole.
+//   They lean toward the pointer and spread apart as you scroll away.
+// Phones and portrait tablets: the vertical film fills the screen (its native shape), headline at the foot.
+import WaButton from './WaButton.astro';
+import LinkButton from './LinkButton.astro';
+import { href, useT, type Locale } from '../i18n/ui';
+interface Props { lang: Locale }
+const { lang } = Astro.props;
+const t = useT(lang);
+const words = t('home.hero.title').split(' ');
+const f = (id: string) => ({ src: `/media/film/${id}.mp4`, poster: `/media/film/${id}.jpg` });
+---
+<section id="hero" data-hide-dock data-header-dark class="hh on-ink relative isolate overflow-hidden bg-ink text-paper">
+  <div class="hh-glow" aria-hidden="true"></div>
+
+  <div class="hh-stack" aria-hidden="true">
+    <figure class="hh-card hh-side hh-l">
+      <video muted loop playsinline preload="none" poster={f('nelore').poster}><source src={f('nelore').src} type="video/mp4" /></video>
+      <figcaption>Nelore</figcaption>
+    </figure>
+    <figure class="hh-card hh-side hh-r">
+      <video muted loop playsinline preload="none" poster={f('sindi').poster}><source src={f('sindi').src} type="video/mp4" /></video>
+      <figcaption>Sindi</figcaption>
+    </figure>
+    <figure class="hh-card hh-main">
+      <video muted loop playsinline autoplay preload="auto" poster={f('gate').poster}><source src={f('gate').src} type="video/mp4" /></video>
+      <figcaption>Hacienda Pesquería</figcaption>
+    </figure>
+  </div>
+
+  <div class="hh-copy container-x">
+    <div class="hh-copy-inner">
+      <h1 class="hh-title" aria-label={t('home.hero.title')}>
+        {words.map((w, i) => <span aria-hidden="true" class="hero-word"><span style={`animation-delay:${120 + i * 70}ms`}>{w}</span></span>)}
+      </h1>
+      <p class="hh-tag hero-fade"><em>{t('meta.tagline')}</em><span aria-hidden="true"> · </span><span class="hh-breeds">Nelore · Nelore Mocho · Sindi</span></p>
+      <div class="hh-ctas hero-fade">
+        <WaButton intent="general" lang={lang}>{t('cta.talk')}</WaButton>
+        <LinkButton href={href(lang, 'herd')} variant="light">{t('cta.herd')}</LinkButton>
+      </div>
+    </div>
+  </div>
+
+  <p class="hh-cue label" aria-hidden="true"><span></span>{t('home.scroll')}</p>
+</section>
+
+<style is:global>
+  /* ---------- Phones and portrait tablets: full-bleed film ---------- */
+  .hh { height: 100svh; min-height: 34rem; display: flex; flex-direction: column; justify-content: flex-end; }
+  .hh-glow { display: none; }
+  .hh-stack { position: absolute; inset: 0; z-index: -1; }
+  .hh-side { display: none; }
+  .hh-main { position: absolute; inset: 0; margin: 0; }
+  .hh-card video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .hh-main::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgb(20 28 23 / .94) 0%, rgb(20 28 23 / .55) 42%, rgb(20 28 23 / .1) 70%, rgb(20 28 23 / .35) 100%); }
+  .hh-card figcaption { display: none; }
+  .hh-copy { position: relative; padding-bottom: max(2rem, env(safe-area-inset-bottom)); }
+  .hh-title { font-size: clamp(3rem, 13.5vw, 5.5rem); line-height: .94; letter-spacing: -0.025em; max-width: 12ch; }
+  .hh-tag { margin-top: 1.25rem; font-size: 1.0625rem; color: rgb(242 236 225 / .85); }
+  .hh-tag em { font-family: var(--font-display); font-size: 1.2em; }
+  .hh-ctas { margin-top: 1.5rem; display: flex; flex-wrap: wrap; gap: .625rem; }
+  .hh-ctas > a { flex: 1 1 auto; }
+  .hh-cue { display: none; }
+
+  /* ---------- Desktop: split screen, films shown whole ---------- */
+  @media (min-width: 64rem) and (orientation: landscape) {
+    /* The fan (centre film + two leaning side films) is about 2.1 film-widths wide.
+       The copy column gets exactly the space left of it, and the headline is sized to that column. */
+    .hh { min-height: 40rem; justify-content: center;
+      --pad: 2.5rem;
+      --ch: min(calc(100svh - 12rem), 46rem);
+      --cw: min(calc(var(--ch) * 9 / 16), 21vw);
+      --sw: calc(var(--cw) * 2.1);
+      --col: calc(100vw - 2 * var(--pad) - var(--sw) - 3rem); }
+    .hh-glow { display: block; position: absolute; inset: 0; z-index: -2;
+      background:
+        radial-gradient(60% 70% at 74% 55%, rgb(184 56 26 / .28), transparent 70%),
+        radial-gradient(40% 50% at 15% 90%, rgb(205 180 140 / .10), transparent 70%); }
+    .hh-stack { inset: auto; z-index: 1; top: calc(50% + 2.25rem); right: var(--pad);
+      width: var(--sw); height: calc(var(--cw) * 16 / 9); transform: translateY(-50%); perspective: 1400px; }
+    .hh-stack-tilt { position: absolute; inset: 0; transform-style: preserve-3d; }
+    .hh-card { position: absolute; top: 0; left: 50%; width: var(--cw); aspect-ratio: 9 / 16; margin: 0 0 0 calc(var(--cw) / -2);
+      overflow: hidden; border-radius: 6px; background: var(--color-ink-2);
+      box-shadow: 0 2px 4px rgb(0 0 0 / .2), 0 40px 70px -30px rgb(0 0 0 / .8);
+      animation: hh-in 1.3s var(--ease-out-expo) backwards; }
+    .hh-main { inset: auto; top: 0; z-index: 2; animation-delay: .15s; }
+    .hh-main::after { background: linear-gradient(to top, rgb(20 28 23 / .45), transparent 30%); }
+    .hh-side { display: block; z-index: 1; scale: .84; opacity: .92; }
+    .hh-l { rotate: -7deg; translate: -50% 4%; animation-delay: .3s; }
+    .hh-r { rotate: 7deg; translate: 50% 4%; animation-delay: .4s; }
+    .hh-card figcaption { display: block; position: absolute; left: 0; right: 0; bottom: 0; z-index: 1; padding: 2.5rem 1rem .9rem;
+      font-family: var(--font-display); font-size: 1.3rem; line-height: 1.1; color: var(--color-paper);
+      background: linear-gradient(to top, rgb(20 28 23 / .7), transparent); }
+    .hh-main figcaption { font-family: var(--font-sans); font-size: .8125rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; font-stretch: 78%; color: var(--color-dust); background: none; }
+    .hh-copy { padding-top: 5rem; padding-bottom: 0; }
+    .hh-copy-inner { max-width: min(var(--col), 44rem); }
+    /* "Productivo" is the longest line, about 6.7em wide in Bodoni */
+    .hh-title { font-size: min(calc(var(--col) / 6.9), 11svh, 8rem); max-width: none; }
+    .hh-tag { margin-top: 1.75rem; font-size: 1.125rem; }
+    .hh-ctas { margin-top: 2.25rem; gap: .75rem; }
+    .hh-ctas > a { flex: 0 0 auto; }
+    .hh-cue { display: flex; align-items: center; gap: .75rem; position: absolute; left: 50%; bottom: 1.5rem; translate: -50% 0; color: rgb(242 236 225 / .6); }
+    .hh-cue span { display: block; width: 1px; height: 2.25rem; background: currentColor; transform-origin: top; animation: hh-cue 2.2s var(--ease-out-expo) infinite; }
+  }
+  @media (min-width: 80rem) and (orientation: landscape) { .hh { --pad: max(3.5rem, calc((100vw - 86rem) / 2 + 3.5rem)); } }
+  /* phones held sideways: one short screen, so a smaller headline and no tagline */
+  @media (orientation: landscape) and (max-height: 32rem) and (max-width: 63.99rem) {
+    .hh { min-height: 0; }
+    .hh-title { font-size: min(15svh, 9vw); max-width: none; }
+    .hh-tag { display: none; }
+    .hh-ctas { margin-top: 1rem; }
+    .hh-ctas > a { flex: 0 0 auto; }
+  }
+  @keyframes hh-in { from { opacity: 0; transform: translateY(60px) scale(.96); } }
+  @keyframes hh-cue { 0% { transform: scaleY(0); } 60%, 100% { transform: scaleY(1); opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .hh-card, .hh-cue span { animation: none !important; } }
+</style>
+
+<script>
+  import { want, clamp, lerp, reducedMotion, DESKTOP } from '../lib/film';
+  const hero = document.getElementById('hero')!;
+  const stack = hero.querySelector<HTMLElement>('.hh-stack')!;
+  const copy = hero.querySelector<HTMLElement>('.hh-copy-inner')!;
+  const [l, r, main] = ['.hh-l', '.hh-r', '.hh-main'].map((s) => hero.querySelector<HTMLElement>(s)!);
+  const films = [l, r, main].map((c) => c.querySelector('video')!);
+  const desk = matchMedia(DESKTOP);
+  const still = reducedMotion();
+
+  // Wrap the cards in a tilt layer (kept out of the markup so the phone layout stays simple).
+  const tilt = document.createElement('div');
+  tilt.className = 'hh-stack-tilt';
+  tilt.append(...stack.children);
+  stack.append(tilt);
+
+  let visible = true, px = 0, py = 0, tx = 0, ty = 0, raf = 0;
+  new IntersectionObserver(([e]) => { visible = e.isIntersecting; frame(); }).observe(hero);
+
+  function frame() {
+    raf = 0;
+    const d = desk.matches;
+    // Side films only exist on desktop.
+    want(films[2], visible);
+    want(films[0], visible && d);
+    want(films[1], visible && d);
+    if (still) return;
+    const p = clamp(scrollY / hero.offsetHeight);
+    copy.style.transform = `translate3d(0, ${-p * 90}px, 0)`;
+    copy.style.opacity = String(1 - clamp(p * 1.6));
+    if (d) {
+      // ease the pointer lean
+      tx = lerp(tx, px, 0.12); ty = lerp(ty, py, 0.12);
+      tilt.style.transform = `rotateY(${tx * 7}deg) rotateX(${-ty * 5}deg)`;
+      l.style.transform = `translate3d(${-p * 40}%, ${p * 6}%, 0) rotate(${-p * 6}deg)`;
+      r.style.transform = `translate3d(${p * 40}%, ${p * 6}%, 0) rotate(${p * 6}deg)`;
+      main.style.transform = `translate3d(0, ${-p * 8}%, 0)`;
+      if (Math.abs(tx - px) > 0.002 || Math.abs(ty - py) > 0.002) raf = requestAnimationFrame(frame);
+    } else {
+      main.style.transform = `scale(${1 + p * 0.08})`;
+      tilt.style.transform = l.style.transform = r.style.transform = '';
+    }
+  }
+  const kick = () => { if (!raf) raf = requestAnimationFrame(frame); };
+  addEventListener('scroll', kick, { passive: true });
+  addEventListener('resize', kick);
+  desk.addEventListener('change', kick);
+  hero.addEventListener('pointermove', (e) => {
+    if (e.pointerType !== 'mouse' || !desk.matches) return;
+    px = (e.clientX / innerWidth - 0.5) * 2; py = (e.clientY / innerHeight - 0.5) * 2; kick();
+  });
+  hero.addEventListener('pointerleave', () => { px = py = 0; kick(); });
+  frame();
+</script>

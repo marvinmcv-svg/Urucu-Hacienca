@@ -6,7 +6,8 @@ import WaButton from '../../components/WaButton.astro';
 import LinkButton from '../../components/LinkButton.astro';
 import AnimalCard from '../../components/AnimalCard.astro';
 import Icon from '../../components/Icon.astro';
-import CinemaHero from '../../components/CinemaHero.astro';
+import HomeHero from '../../components/HomeHero.astro';
+import HomeReel from '../../components/HomeReel.astro';
 import { locales, href, useT, type Locale } from '../../i18n/ui';
 import { animals } from '../../data/animals';
 import { site } from '../../data/site';
@@ -22,7 +23,8 @@ const next = upcoming()[0];
 <Base lang={lang} overlay>
   <link slot="head" rel="preload" as="image" href="/media/film/gate.jpg" fetchpriority="high" />
 
-  <CinemaHero lang={lang} />
+  <HomeHero lang={lang} />
+  <HomeReel lang={lang} />
 
   <!-- Featured animals: the catalogue, on dark ground -->
   <section class="on-ink bg-ink py-24 text-paper lg:py-36">

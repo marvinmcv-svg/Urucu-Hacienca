@@ -188,7 +188,7 @@ const strings = {
   suggest.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => ask(b.textContent!)));
   render();
 
-  // On phones, keep the dock out of the way while a cinematic/hero section fills the bottom of the screen
+  // On phones and tablets, keep the dock out of the way while a cinematic/hero section fills the bottom of the screen
   // (those sections carry their own WhatsApp button or need the space).
   const heroes = document.querySelectorAll('[data-hide-dock]');
   if (heroes.length) {
@@ -203,7 +203,8 @@ const strings = {
 
 <style>
   .concierge { transition: transform .5s var(--ease-out-expo), opacity .3s; }
-  @media (width < 40rem) {
+  /* every layout except the desktop split */
+  @media not all and (min-width: 64rem) and (orientation: landscape) {
     .concierge[data-tucked] { transform: translateY(calc(100% + 2rem)); opacity: 0; pointer-events: none; }
   }
 </style>
