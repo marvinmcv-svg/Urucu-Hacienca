@@ -1,14 +1,10 @@
 import type { APIRoute } from 'astro';
 import { MARVIN_SYSTEM } from '../../lib/marvin-prompt';
 import { isLocale, localeNames } from '../../i18n/ui';
+import { MODELS, callModel } from '../../lib/nvidia';
 
 export const prerender = false;
 
-// NVIDIA's OpenAI-compatible endpoint. The key lives only in the server environment (NVIDIA_API_KEY).
-const API = 'https://integrate.api.nvidia.com/v1/chat/completions';
-const MODEL = process.env.MARVIN_MODEL || 'nvidia/nemotron-3-ultra-550b-a55b';
-// Reasoning makes replies slower and is never shown in a chat bubble, so it is off unless asked for.
-const THINKING = process.env.MARVIN_THINKING === 'true';
 const MAX_TURNS = 12;
 const MAX_CHARS = 800;
 
@@ -46,33 +42,19 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
 
   const ctrl = new AbortController();
   request.signal.addEventListener('abort', () => ctrl.abort());
-  let upstream: Response;
-  try {
-    upstream = await fetch(API, {
-      method: 'POST',
-      signal: ctrl.signal,
-      headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json', accept: 'text/event-stream' },
-      body: JSON.stringify({
-        model: MODEL,
-        stream: true,
-        temperature: 0.6,
-        top_p: 0.95,
-        max_tokens: THINKING ? 4096 : 700, // short chat replies; also a per-request cost cap
-        chat_template_kwargs: { enable_thinking: THINKING },
-        messages: [
-          { role: 'system', content: `${MARVIN_SYSTEM}\n\nPage language: ${localeNames[input.lang as keyof typeof localeNames]}.` },
-          ...input.messages,
-        ],
-      }),
-    });
-  } catch (err) {
-    console.error('marvin fetch', String(err));
-    return new Response('Marvin unavailable', { status: 503 });
+  const messages = [
+    { role: 'system', content: `${MARVIN_SYSTEM}\n\nPage language: ${localeNames[input.lang as keyof typeof localeNames]}.` },
+    ...input.messages,
+  ];
+  // Try the main model, then the fallbacks, so one unavailable or overloaded model never silences Marvin.
+  let upstream: Response | null = null;
+  for (const model of MODELS) {
+    const r = await callModel(key, model, messages, ctrl.signal);
+    if (r.ok) { upstream = r.res; break; }
+    console.error(`marvin upstream ${model}: ${r.status} ${r.detail}`);
+    if (request.signal.aborted) break;
   }
-  if (!upstream.ok || !upstream.body) {
-    console.error('marvin upstream', upstream.status, (await upstream.text().catch(() => '')).slice(0, 300));
-    return new Response('Marvin unavailable', { status: 503 });
-  }
+  if (!upstream?.body) return new Response('Marvin unavailable', { status: 503 });
 
   // Server-sent events in, plain text out: only the answer text, never the reasoning.
   const encoder = new TextEncoder();
