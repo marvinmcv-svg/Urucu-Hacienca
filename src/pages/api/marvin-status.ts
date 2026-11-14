@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { MODELS, callModel } from '../../lib/nvidia';
+import { API, MODELS, callModel } from '../../lib/nvidia';
 
 export const prerender = false;
 
@@ -24,5 +24,12 @@ export const GET: APIRoute = async ({ request, clientAddress }) => {
       results.push({ model, ok: r.ok, status: r.ok ? 200 : r.status, ms: Date.now() - t0, ...(r.ok ? {} : { detail: r.detail }) });
     }
   }
-  return Response.json({ keySet: !!key, models: results }, { headers: { 'cache-control': 'no-store' } });
+  // The models this key can use right now, so a retired or missing one is easy to replace.
+  let available: string[] = [];
+  if (key) {
+    const r = await fetch(API.replace(/\/chat\/completions$/, '/models'), { headers: { authorization: `Bearer ${key}` } }).catch(() => null);
+    const j = r?.ok ? await r.json().catch(() => null) : null;
+    available = ((j?.data ?? []) as { id: string }[]).map((m) => m.id).sort();
+  }
+  return Response.json({ keySet: !!key, models: results, available }, { headers: { 'cache-control': 'no-store' } });
 };
