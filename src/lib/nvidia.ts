@@ -2,9 +2,10 @@
 
 // NVIDIA's OpenAI-compatible endpoint. The key lives only in the server environment (NVIDIA_API_KEY).
 export const API = `${process.env.NVIDIA_BASE_URL || 'https://integrate.api.nvidia.com/v1'}/chat/completions`;
-const MODEL = process.env.MARVIN_MODEL || 'nvidia/nemotron-3-ultra-550b-a55b';
+// Nemotron 3 Super: the Ultra (550B) model was too slow to start answering on NVIDIA's hosted API.
+const MODEL = process.env.MARVIN_MODEL || 'nvidia/nemotron-3-super-120b-a12b';
 // Used when the main model errors or takes too long to start answering. Comma-separated.
-const FALLBACKS = (process.env.MARVIN_FALLBACK_MODELS ?? 'meta/llama-3.3-70b-instruct').split(',').map((m) => m.trim()).filter(Boolean);
+const FALLBACKS = (process.env.MARVIN_FALLBACK_MODELS ?? 'nvidia/nemotron-3.5-lightning-30b-a3b,deepseek-ai/deepseek-v4.1-flash,z-ai/glm-5.3-flash').split(',').map((m) => m.trim()).filter(Boolean);
 export const MODELS = [MODEL, ...FALLBACKS.filter((m) => m !== MODEL)];
 const START_TIMEOUT_MS = 25_000; // time allowed for a model to start responding
 // Reasoning makes replies slower and is never shown in a chat bubble, so it is off unless asked for.
