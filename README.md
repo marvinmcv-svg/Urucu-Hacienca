@@ -20,7 +20,7 @@ Marvin needs `ANTHROPIC_API_KEY` in your environment. See `.env.example`. Withou
 |---|---|
 | UI text in all 3 languages | `src/i18n/ui.ts` |
 | Animals (plantel) | `src/data/animals.ts` |
-| Auctions & shows | `src/data/events.ts` |
+| Auctions & shows (catalogue pages, lots) | `src/data/events.ts` |
 | Breeds, AI results, awards, contact info | `src/data/site.ts` |
 | Videos & gallery photos | `src/data/videos.ts` |
 | WhatsApp number & prefilled messages | `src/lib/wa.ts` |
@@ -28,6 +28,27 @@ Marvin needs `ANTHROPIC_API_KEY` in your environment. See `.env.example`. Withou
 | Marvin API endpoint | `src/pages/api/marvin.ts` |
 
 Edit a data file, and the pages **and Marvin's knowledge** update together on the next deploy.
+
+## Adding an auction (remate)
+Each auction gets its own catalogue page at `/es/remates/<slug>/` (also `/en/` and `/pt/`), with a countdown, "add to calendar" links, a WhatsApp button per lot and a share button.
+1. In `src/data/events.ts`, add an entry at the top of `events`:
+   ```ts
+   {
+     slug: 'evolucion-genetica-sindi-2027',          // the page address
+     name: '5.º Remate Evolución Genética Sindi',
+     kind: 'auction',
+     date: '2027-03-06T11:00:00-04:00',               // Bolivia time
+     hours: 5,                                        // optional, default 4
+     venue: 'Salón Guaraní · Fexpocruz',
+     stream: 'https://…',                             // optional live-stream link
+     catalogue: 'https://…/catalogo.pdf',             // optional PDF
+     lots: [
+       { lot: 3, animal: 'Galáctico FIV Urucú', slug: 'galactico-fiv-urucu' },  // an animal from animals.ts: photo, pedigree… filled in
+       { lot: 8, animal: 'Ternera 512', breed: 'sindi', sex: 'f', born: '2025-09-01', pedigree: 'Sire × Dam (MGS)', photo: 'ternera-512' },
+     ],
+   },
+   ```
+2. Deploy. The home page, the Remates list and Marvin pick it up. "Next auction" switches over by itself once the date has passed.
 
 ## Adding media
 1. Put the original file in `assets/instagram/` using the name format `NN-short-name-<postId>.jpg|mp4`.

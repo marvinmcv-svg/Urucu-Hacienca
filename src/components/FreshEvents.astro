@@ -1,6 +1,7 @@
 ---
 // Pages are built ahead of time, but auctions are about dates. This re-checks them in the visitor's browser:
 //   [data-next]      a box holding candidate auctions ([data-at]) and a fallback ([data-none]); shows the soonest one still on.
+//   [data-href]      on a candidate: where a wrapping a[data-auctions-href] should point while it is the next one.
 //   [data-past-at]   an item in a "past events" list; shown once its event is over.
 import { GRACE_MS } from '../data/events';
 ---
@@ -12,6 +13,9 @@ import { GRACE_MS } from '../data/events';
       const first = [...box.querySelectorAll('[data-at]')].find((c) => on(c.dataset.at));
       box.querySelectorAll('[data-at]').forEach((c) => { c.hidden = c !== first; });
       box.querySelectorAll('[data-none]').forEach((el) => { el.hidden = !!first; });
+      // A link wrapping the box goes to the chosen auction's page, or to the auctions list when none is coming.
+      const link = box.closest('a[data-auctions-href]');
+      if (link) link.href = first?.dataset.href || link.dataset.auctionsHref;
     });
     document.querySelectorAll('[data-past-at]').forEach((el) => { el.hidden = on(el.dataset.pastAt); });
   })();

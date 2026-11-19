@@ -1,9 +1,10 @@
 import type { APIRoute } from 'astro';
 import { locales, routes, htmlLang } from '../i18n/ui';
 import { animals } from '../data/animals';
+import { auctions } from '../data/events';
 
 export const GET: APIRoute = ({ site }) => {
-  const paths = [...Object.values(routes), ...animals.map((a) => `plantel/${a.slug}/`)];
+  const paths = [...Object.values(routes), ...animals.map((a) => `plantel/${a.slug}/`), ...auctions.map((e) => `remates/${e.slug}/`)];
   const url = (l: string, p: string) => new URL(`/${l}/${p}`, site).href;
   const body = paths.flatMap((p) => locales.map((l) => `<url><loc>${url(l, p)}</loc>${
     locales.map((a) => `<xhtml:link rel="alternate" hreflang="${htmlLang[a]}" href="${url(a, p)}"/>`).join('')}</url>`)).join('');

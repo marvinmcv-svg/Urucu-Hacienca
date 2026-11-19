@@ -1,0 +1,167 @@
+---
+// One auction: when and where, a live countdown, calendar and stream links, and the catalogue of lots.
+// Each lot has its own WhatsApp button, so the team knows exactly which animal a buyer is asking about.
+import { Image } from 'astro:assets';
+import Base from '../../../layouts/Base.astro';
+import WaButton from '../../../components/WaButton.astro';
+import VideoPlayer from '../../../components/VideoPlayer.astro';
+import Icon from '../../../components/Icon.astro';
+import { locales, href, useT, type Locale } from '../../../i18n/ui';
+import { auctions, endOf, type Event } from '../../../data/events';
+import { breeds } from '../../../data/site';
+import { lotView, googleCalendar } from '../../../lib/auction';
+import { photo, posterSrc } from '../../../lib/media';
+
+export const getStaticPaths = () => locales.flatMap((lang) => auctions.map((e) => ({ params: { lang, slug: e.slug }, props: { e } })));
+const lang = Astro.params.lang as Locale;
+const { e } = Astro.props as { e: Event };
+const t = useT(lang);
+const tz = 'America/La_Paz';
+const date = new Date(e.date).toLocaleDateString(lang, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: tz });
+const time = new Date(e.date).toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit', timeZone: tz });
+const lots = (e.lots ?? []).map(lotView).sort((a, b) => (a.lot ?? 1e9) - (b.lot ?? 1e9));
+const breedName = (id?: string) => breeds.find((b) => b.id === id)?.name[lang];
+const lotBreeds = [...new Set(lots.map((l) => l.breed).filter(Boolean))] as string[];
+const born = (d?: string) => d && new Date(`${d}T12:00:00`).toLocaleDateString(lang, { month: 'short', year: 'numeric' });
+const pageUrl = new URL(Astro.url.pathname, Astro.site).href;
+const details = `${e.name} · ${e.venue} · Haciendas Urucú`;
+const gcal = googleCalendar(e, `${details}\n${pageUrl}`);
+const share = `https://wa.me/?text=${encodeURIComponent(`${t('auctions.share_text')} ${e.name} · ${date}\n${pageUrl}`)}`;
+const lotLabel = (n?: number) => (n ? `${t('auctions.lot')} ${n}` : '');
+const now = Date.now();
+const state = now < +new Date(e.date) ? 'soon' : now < +endOf(e) ? 'live' : 'ended';
+const btn = 'inline-flex min-h-12 items-center justify-center gap-2.5 rounded-[3px] border border-paper/35 px-5 text-sm font-semibold text-paper transition-colors hover:bg-paper hover:text-ink';
+
+const eventLd = {
+  '@context': 'https://schema.org', '@type': 'Event', name: e.name, startDate: e.date, endDate: endOf(e).toISOString(), url: pageUrl,
+  eventAttendanceMode: e.stream ? 'https://schema.org/MixedEventAttendanceMode' : 'https://schema.org/OfflineEventAttendanceMode',
+  eventStatus: 'https://schema.org/EventScheduled',
+  location: { '@type': 'Place', name: e.venue, address: { '@type': 'PostalAddress', addressLocality: 'Santa Cruz de la Sierra', addressCountry: 'BO' } },
+  organizer: { '@type': 'Organization', name: 'Haciendas Urucú', url: new URL(`/${lang}/`, Astro.site).href },
+  ...(lots.length ? { description: lots.map((l) => [lotLabel(l.lot), l.name].filter(Boolean).join(' ')).join(', ') } : {}),
+};
+const leadPhoto = lots.find((l) => l.photo)?.photo;
+---
+<Base lang={lang} title={e.name} description={`${date} · ${e.venue}${lots.length ? ` · ${lots.length} ${t('auctions.lots').toLowerCase()}` : ''}`} image={leadPhoto ? photo(leadPhoto) : undefined} jsonLd={[eventLd]}>
+  <section class="on-ink bg-ink text-paper">
+    <div class="container-x grid gap-12 pb-16 pt-8 lg:grid-cols-[1.3fr_1fr] lg:gap-20 lg:pb-24 lg:pt-12">
+      <div>
+        <a href={href(lang, 'auctions')} class="inline-flex min-h-11 items-center gap-2 text-[0.9375rem] font-semibold text-paper/75 hover:text-paper"><Icon name="arrow-left" />{t('auctions.all')}</a>
+        <p class="label mt-8 text-dust">{e.venue}</p>
+        <h1 class="mt-4 text-[2.6rem] leading-[0.98] sm:text-6xl lg:text-[4.75rem]">{e.name}</h1>
+        <p class="num mt-5 text-lg text-paper/85"><span class="first-letter:uppercase inline-block">{date}</span> · {time} <span class="text-paper/55">({t('auctions.time_note')})</span></p>
+
+        <div class="cd mt-10 border-y border-paper/15 py-6" data-countdown data-start={e.date} data-end={endOf(e).toISOString()} aria-live="polite">
+          <div data-state="soon" hidden={state !== 'soon'}>
+            <p class="label text-ember">{t('auctions.starts_in')}</p>
+            <p class="mt-3 flex gap-6 font-display">
+              <span><b class="num block text-5xl font-medium leading-none sm:text-6xl" data-unit="d">–</b><span class="label text-paper/55">{t('auctions.days')}</span></span>
+              <span><b class="num block text-5xl font-medium leading-none sm:text-6xl" data-unit="h">–</b><span class="label text-paper/55">{t('auctions.hours')}</span></span>
+              <span><b class="num block text-5xl font-medium leading-none sm:text-6xl" data-unit="m">–</b><span class="label text-paper/55">{t('auctions.minutes')}</span></span>
+            </p>
+          </div>
+          <p data-state="live" hidden={state !== 'live'} class="flex items-center gap-3 font-display text-4xl"><span class="relative flex size-3"><span class="absolute inline-flex size-full animate-ping rounded-full bg-ember opacity-75 motion-reduce:hidden"></span><span class="relative inline-flex size-3 rounded-full bg-ember"></span></span>{t('auctions.live')}</p>
+          <p data-state="ended" hidden={state !== 'ended'} class="font-display text-4xl text-paper/80">{t('auctions.ended')}</p>
+        </div>
+
+        <div class="mt-8 flex flex-wrap gap-3">
+          <WaButton intent="lot" lang={lang} vars={{ lot: e.name }}>{state === 'ended' ? t('cta.notify_auction') : t('auctions.ask')}</WaButton>
+          {e.stream && <a href={e.stream} target="_blank" rel="noopener" class={btn}><Icon name="play" class="size-4" />{t('auctions.stream')}</a>}
+          {e.catalogue && <a href={e.catalogue} target="_blank" rel="noopener" class={btn}>{t('auctions.pdf')} ↗</a>}
+        </div>
+        <div class="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-paper/75">
+          <span class="label self-center text-paper/50">{t('auctions.calendar')}:</span>
+          <a class="link-line min-h-9 content-center" href={gcal} target="_blank" rel="noopener">Google Calendar</a>
+          <a class="link-line min-h-9 content-center" href={`/remates/${e.slug}.ics`}>Apple / Outlook</a>
+          <a class="link-line ml-auto inline-flex min-h-9 items-center gap-2" href={share} target="_blank" rel="noopener"><Icon name="whatsapp" class="size-4 text-wa" />{t('auctions.share')}</a>
+        </div>
+        {e.about && <p class="mt-10 max-w-2xl text-lg leading-relaxed text-paper/80">{e.about[lang]}</p>}
+        {e.note && <p class="mt-6 max-w-2xl leading-relaxed text-paper/70">{e.note[lang]}</p>}
+      </div>
+      {e.video && <VideoPlayer id={e.video} title={e.name} credit={e.credit} tone="ink" class="mx-auto w-full max-w-xs self-center" />}
+    </div>
+  </section>
+
+  <section class="container-x py-20 lg:py-28" aria-labelledby="lots-title">
+    <div class="flex flex-wrap items-end justify-between gap-6">
+      <h2 id="lots-title" class="text-4xl lg:text-5xl">{t('auctions.lots')} {lots.length > 0 && <span class="num text-achiote">({lots.length})</span>}</h2>
+      {lotBreeds.length > 1 && (
+        <div class="flex flex-wrap gap-2" role="group" aria-label={t('herd.filter.label')} data-lot-filter>
+          <button type="button" aria-pressed="true" data-breed="" class="lf">{t('herd.filter.all')}</button>
+          {lotBreeds.map((b) => <button type="button" aria-pressed="false" data-breed={b} class="lf">{breedName(b)}</button>)}
+        </div>
+      )}
+    </div>
+
+    {lots.length === 0 ? (
+      <div class="mt-10 max-w-2xl border-t border-ink/20 pt-8">
+        <p class="text-lg leading-relaxed text-ink-soft">{t('auctions.lots_tbd')}</p>
+        <WaButton intent="lot" lang={lang} vars={{ lot: e.name }} class="mt-8">{t('cta.notify_auction')}</WaButton>
+      </div>
+    ) : (
+      <ol class="mt-12 grid gap-x-6 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
+        {lots.map((l) => {
+          const [sire, ...dam] = (l.pedigree ?? '').split(' × ');
+          const facts = [breedName(l.breed), l.sex && t(`sex.${l.sex}`), born(l.born), l.rgn && `RGN ${l.rgn}`].filter(Boolean);
+          return (
+            <li data-breed={l.breed ?? ''} class="lot flex flex-col">
+              <div class="relative aspect-[4/3] overflow-hidden rounded-[2px] bg-paper-deep sm:aspect-[4/5]">
+                {l.photo
+                  ? <Image src={photo(l.photo)} alt={l.name} widths={[400, 640, 900]} sizes="(min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw" class="size-full object-cover" />
+                  : l.video && <img src={posterSrc(l.video)} alt={l.name} loading="lazy" decoding="async" class="size-full object-cover" />}
+                {l.lot && <span class="label num absolute left-3 top-3 rounded-[2px] bg-ink px-2.5 py-1 text-paper">{lotLabel(l.lot)}</span>}
+                {l.award && <p class="absolute inset-x-0 bottom-0 flex items-center gap-2 bg-[linear-gradient(to_top,rgb(20_28_23/0.85),transparent)] px-4 pb-3.5 pt-10 text-[0.8125rem] font-semibold text-gold"><Icon name="award" class="size-4" />{l.award[lang]}</p>}
+              </div>
+              <p class="label mt-4 border-t border-ink/20 pt-3 text-achiote">{facts.join(' · ')}</p>
+              <h3 class="mt-2 text-[1.6rem] leading-[1.1]">{l.name}</h3>
+              {l.pedigree && <p class="mt-2 text-[0.9375rem] leading-snug text-ink-soft">{sire}{dam.length > 0 && <><span class="px-1 font-display italic text-achiote">×</span>{dam.join(' × ')}</>}</p>}
+              {l.note && <p class="mt-3 text-[0.9375rem] leading-snug">{l.note[lang]}</p>}
+              <div class="mt-auto flex flex-wrap items-center gap-x-5 gap-y-2 pt-5">
+                <WaButton intent="lot" lang={lang} size="sm" vars={{ lot: [lotLabel(l.lot), l.name, `(${e.name})`].filter(Boolean).join(' ') }}>{l.lot ? `${t('cta.ask_lot')} ${l.lot}` : t('cta.ask_animal')}</WaButton>
+                {l.slug && <a href={href(lang, `plantel/${l.slug}/`)} class="link-line inline-flex min-h-11 items-center text-sm font-semibold">{t('cta.more')}</a>}
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+    )}
+  </section>
+</Base>
+
+<style>
+  .lf { min-height: 2.75rem; padding: .5rem 1rem; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--color-ink) 25%, transparent); font-size: .9375rem; transition: background .2s, color .2s; }
+  .lf:hover { border-color: var(--color-ink); }
+  .lf[aria-pressed='true'] { background: var(--color-ink); color: var(--color-paper); border-color: var(--color-ink); }
+</style>
+
+<script>
+  // Countdown: days / hours / minutes until the start, then "happening now", then "finished".
+  document.querySelectorAll<HTMLElement>('[data-countdown]').forEach((box) => {
+    const start = Date.parse(box.dataset.start!), end = Date.parse(box.dataset.end!);
+    const part = (s: string) => box.querySelector<HTMLElement>(`[data-state="${s}"]`)!;
+    const unit = (u: string) => box.querySelector<HTMLElement>(`[data-unit="${u}"]`)!;
+    const tick = () => {
+      const now = Date.now();
+      const state = now < start ? 'soon' : now < end ? 'live' : 'ended';
+      ['soon', 'live', 'ended'].forEach((s) => (part(s).hidden = s !== state));
+      if (state === 'soon') {
+        const m = Math.floor((start - now) / 60000);
+        unit('d').textContent = String(Math.floor(m / 1440));
+        unit('h').textContent = String(Math.floor((m % 1440) / 60)).padStart(2, '0');
+        unit('m').textContent = String(m % 60).padStart(2, '0');
+      }
+      return state;
+    };
+    if (tick() !== 'ended') setInterval(tick, 20_000);
+  });
+
+  // Breed filter for the lots.
+  document.querySelectorAll<HTMLElement>('[data-lot-filter]').forEach((group) => {
+    const buttons = [...group.querySelectorAll<HTMLButtonElement>('button')];
+    const lots = [...document.querySelectorAll<HTMLElement>('.lot')];
+    buttons.forEach((b) => b.addEventListener('click', () => {
+      buttons.forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      lots.forEach((l) => (l.hidden = !!b.dataset.breed && l.dataset.breed !== b.dataset.breed));
+    }));
+  });
+</script>

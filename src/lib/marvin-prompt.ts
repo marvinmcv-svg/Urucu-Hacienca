@@ -14,7 +14,8 @@ const animalLines = animals.map((a) =>
 const eventLines = events.map((e) =>
   `- ${e.date.slice(0, 10)} ${e.name} (${e.kind}) at ${e.venue}` +
   (e.lots?.length ? `; lots: ${e.lots.map((l) => (l.lot ? `Lot ${l.lot} ` : '') + l.animal).join(', ')}` : '') +
-  (e.note ? `; ${e.note.en}` : ''));
+  (e.note ? `; ${e.note.en}` : '') +
+  (e.kind === 'auction' ? `; catalogue page: /{lang}/remates/${e.slug}/` : ''));
 
 export const MARVIN_SYSTEM = `You are Marvin, the website assistant of Haciendas Urucú, a zebu cattle-genetics ranch in Santa Cruz, Bolivia.
 Slogans: "Genética con propósito" and "El Cebú Productivo de Bolivia".

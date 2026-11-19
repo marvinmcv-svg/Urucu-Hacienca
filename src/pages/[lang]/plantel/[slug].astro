@@ -9,6 +9,7 @@ import { locales, href, useT, type Locale } from '../../../i18n/ui';
 import { animals, type Animal } from '../../../data/animals';
 import { breeds } from '../../../data/site';
 import { photo } from '../../../lib/media';
+import { lotsOf } from '../../../lib/auction';
 
 export const getStaticPaths = () => locales.flatMap((lang) => animals.map((a) => ({ params: { lang, slug: a.slug }, props: { a } })));
 const lang = Astro.params.lang as Locale;
@@ -18,6 +19,7 @@ const breed = breeds.find((b) => b.id === a.breed)!.name[lang];
 const born = a.born && new Date(`${a.born}T12:00:00`).toLocaleDateString(lang, { day: 'numeric', month: 'long', year: 'numeric' });
 const more = animals.filter((x) => x.slug !== a.slug && x.breed === a.breed).slice(0, 4);
 const row = 'grid gap-1 py-4 sm:grid-cols-[9rem_1fr] sm:gap-4';
+const offered = lotsOf(a.slug);
 ---
 <Base lang={lang} title={a.name} description={a.text[lang]} image={a.photo ? photo(a.photo) : undefined}>
   <article class="container-x grid gap-12 pb-24 pt-8 lg:grid-cols-2 lg:gap-24 lg:pb-36 lg:pt-14">
@@ -42,6 +44,8 @@ const row = 'grid gap-1 py-4 sm:grid-cols-[9rem_1fr] sm:gap-4';
         <div class:list={[row, 'border-b border-ink/12']}><dt class="label pt-1 text-ink-soft">{t('herd.pedigree')}</dt><dd class="font-display text-xl leading-snug">{a.pedigree}</dd></div>
         {born && <div class:list={[row, 'border-b border-ink/12']}><dt class="label pt-1 text-ink-soft">{t('herd.born')}</dt><dd class="num">{born}</dd></div>}
         {a.status && <div class:list={[row, 'border-b border-ink/12']}><dt class="label pt-1 text-ink-soft">{t('herd.status')}</dt><dd>{a.status[lang]}</dd></div>}
+        {offered.length > 0 && <div class:list={[row, 'border-b border-ink/12']}><dt class="label pt-1 text-ink-soft">{t('auctions.in_auction')}</dt>
+          <dd><ul class="grid gap-1.5">{offered.map(({ event, lot }) => <li><a class="link-line font-medium hover:text-achiote" href={href(lang, `remates/${event.slug}/`)}>{lot ? `${t('auctions.lot')} ${lot} · ` : ''}{event.name}</a></li>)}</ul></dd></div>}
         {a.awards?.length && <div class:list={[row, 'border-b border-ink/12']}><dt class="label pt-1 text-ink-soft">{t('herd.awards')}</dt>
           <dd><ul class="grid gap-2">{a.awards.map((w) => <li class="flex gap-2.5"><Icon name="award" class="mt-1 size-4 text-gold" />{w[lang]}</li>)}</ul></dd></div>}
       </dl>
