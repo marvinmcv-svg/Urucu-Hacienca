@@ -11,7 +11,6 @@ import { aiTotal, breeds } from '../data/site';
 interface Props { lang: Locale }
 const { lang } = Astro.props;
 const t = useT(lang);
-const words = t('home.hero.title').split(' ');
 const breed = (id: string) => breeds.find((b) => b.id === id)!.name[lang];
 const gist = (id: string) => breeds.find((b) => b.id === id)!.text[lang].split('.')[0] + '.';
 const fmt = (n: number) => n.toLocaleString(lang, { maximumFractionDigits: 2 });
@@ -28,8 +27,9 @@ const films = [
 <section id="hero" data-hide-dock data-header-dark class="hx on-ink relative isolate overflow-hidden bg-ink text-paper" aria-roledescription="carousel">
   <div class="hx-films">
     {films.map((f, i) => (
-      <a href={f.to} class:list={['hx-film', i > 2 && 'hx-extra']} data-i={i} tabindex="-1" aria-label={f.word}>
-        <video muted playsinline loop preload={i === 0 ? 'auto' : 'none'} autoplay={i === 0} poster={`/media/film/${f.id}.jpg`} aria-hidden="true">
+      <a href={f.to} class:list={['hx-film', i > 2 && 'hx-extra']} data-i={i} data-on={i === 0 ? '' : undefined} tabindex={i === 0 ? 0 : -1} aria-label={f.word}>
+        <!-- Only the films a first screen can show get a cover up front (the first on phones, three on desktop); the rest load theirs when their turn comes. -->
+        <video muted playsinline loop preload={i === 0 ? 'metadata' : 'none'} poster={i < 3 ? `/media/film/${f.id}.jpg` : undefined} data-poster={`/media/film/${f.id}.jpg`} aria-hidden="true">
           <source src={`/media/film/${f.id}.mp4`} type="video/mp4" />
         </video>
         <span class="hx-col-label" aria-hidden="true">
@@ -49,12 +49,11 @@ const films = [
   <div class="hx-copy container-x">
     <div class="hx-chapter" aria-live="polite">
       {films.map((f, i) => (
-        <p class="hx-ch" data-i={i}><span class="hx-ch-n num">0{i + 1}/0{films.length}</span><span class="hx-ch-word">{f.word}</span><span class="hx-ch-line">{f.line}</span></p>
+        <p class="hx-ch" data-i={i} data-on={i === 0 ? '' : undefined}><span class="hx-ch-n num">0{i + 1}/0{films.length}</span><span class="hx-ch-word">{f.word}</span><span class="hx-ch-line">{f.line}</span></p>
       ))}
     </div>
-    <h1 class="hx-title" aria-label={t('home.hero.title')}>
-      {words.map((w, i) => <span aria-hidden="true" class="hero-word"><span style={`animation-delay:${120 + i * 70}ms`}>{w}</span></span>)}
-    </h1>
+    <!-- One text block, visible from the first paint: it is the page's largest element, so the browser reports it early. -->
+    <h1 class="hx-title">{t('home.hero.title')}</h1>
     <div class="hx-foot hero-fade">
       <p class="hx-tag"><em>{t('meta.tagline')}</em><span aria-hidden="true"> · </span>Nelore · Nelore Mocho · Sindi</p>
       <div class="hx-ctas">
@@ -90,7 +89,10 @@ const films = [
   .hx-ch-word { font-family: var(--font-display); font-size: 1.5rem; font-style: italic; color: var(--color-ember); }
   .hx-ch-line { flex-basis: 100%; font-size: .9375rem; color: rgb(242 236 225 / .85); }
   .hx-ch { text-shadow: 0 1px 12px rgb(0 0 0 / .6); }
-  .hx-title { font-size: clamp(2.8rem, 12.5vw, 5.5rem); line-height: .94; letter-spacing: -0.025em; max-width: 12ch; }
+  .hx-title { font-size: clamp(2.8rem, 12.5vw, 5.5rem); line-height: .94; letter-spacing: -0.025em; max-width: 12ch; animation: hx-title 1.1s var(--ease-out-expo) both; }
+  /* a reveal that never hides the text: it slides up a little and sharpens */
+  @keyframes hx-title { from { transform: translateY(.18em); filter: blur(6px); } }
+  @media (prefers-reduced-motion: reduce) { .hx-title { animation: none; } }
   .hx-tag { margin-top: 1rem; font-size: 1rem; color: rgb(242 236 225 / .8); }
   .hx-tag em { font-family: var(--font-display); font-size: 1.2em; }
   .hx-ctas { margin-top: 1.25rem; display: flex; flex-wrap: wrap; gap: .625rem; }
@@ -137,7 +139,7 @@ const films = [
 </style>
 
 <script>
-  import { want, warm, DESKTOP, reducedMotion } from '../lib/film';
+  import { want, warm, lean, DESKTOP, reducedMotion } from '../lib/film';
   const hero = document.getElementById('hero')!;
   const items = [...hero.querySelectorAll<HTMLAnchorElement>('.hx-film')];
   const vids = items.map((a) => a.querySelector('video')!);
@@ -148,17 +150,21 @@ const films = [
   const n = items.length;
   let cur = 0, visible = true, t0 = 0, dur = 6000, paused = false, progress = 0;
 
+  const cover = (v: HTMLVideoElement) => { if (!v.poster && v.dataset.poster) v.poster = v.dataset.poster; };
+  const prime = (v: HTMLVideoElement) => { cover(v); warm(v); };
+
   function show(i: number) {
     cur = (i + n) % n;
     items.forEach((a, k) => { a.toggleAttribute('data-on', k === cur); a.tabIndex = k === cur ? 0 : -1; });
     chs.forEach((c, k) => c.toggleAttribute('data-on', k === cur));
     bars.forEach((b, k) => { b.classList.toggle('done', k < cur); (b.firstElementChild as HTMLElement).style.transform = k < cur ? 'scaleX(1)' : 'scaleX(0)'; });
     const v = vids[cur];
-    if (v.readyState < 1) v.preload = 'auto';
+    cover(v);
+    if (v.readyState < 1 && !lean) v.preload = 'auto';
     v.currentTime = 0;
     dur = Math.max(5000, (Number.isFinite(v.duration) && v.duration > 0 ? v.duration : 6) * 1000);
     v.addEventListener('loadedmetadata', () => { if (cur === items.indexOf(v.parentElement as HTMLAnchorElement)) dur = Math.max(5000, v.duration * 1000); }, { once: true });
-    warm(vids[(cur + 1) % n]);
+    prime(vids[(cur + 1) % n]);
     t0 = performance.now();
     progress = 0;
     sync();
@@ -190,8 +196,8 @@ const films = [
 
   new IntersectionObserver(([e]) => { visible = e.isIntersecting; sync(); }).observe(hero);
   document.addEventListener('visibilitychange', () => { visible = !document.hidden; sync(); });
-  desk.addEventListener('change', () => { if (desk.matches) vids.slice(0, 3).forEach(warm); sync(); });
-  if (desk.matches) vids.slice(0, 3).forEach(warm);
+  desk.addEventListener('change', () => { if (desk.matches) vids.slice(0, 3).forEach(prime); sync(); });
+  if (desk.matches) vids.slice(0, 3).forEach(prime);
   show(0);
   requestAnimationFrame(tick);
 </script>

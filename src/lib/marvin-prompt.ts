@@ -1,6 +1,6 @@
 // Builds Marvin's system prompt from the same data the site renders, so the bot never drifts from the pages.
 import { animals } from '../data/animals';
-import { events } from '../data/events';
+import { events, upcoming } from '../data/events';
 import { breeds, aiResults, aiTotal, awards2026, partners, site } from '../data/site';
 import { WA_NUMBER } from './wa';
 
@@ -41,7 +41,20 @@ ${animalLines.join('\n')}
 
 # Auctions & shows (most recent first)
 ${eventLines.join('\n')}
-- The next auction date has not been announced yet; visitors can ask on WhatsApp to be notified.
+- Which auction is next is given in the latest system note (it changes with the date). Visitors can ask on WhatsApp to be notified of the next catalogue.
 
 # Contact
 WhatsApp +${WA_NUMBER} (preferred), Instagram @haciendasurucu, Facebook /haciendasurucu. No email or street address is published.`;
+
+
+/** Facts that depend on today's date, added to every request so Marvin is never out of date between deploys. */
+export function marvinToday(now = new Date()): string {
+  const fmt = (iso: string) => new Date(iso).toLocaleString('en-GB', { dateStyle: 'full', timeStyle: 'short', timeZone: 'America/La_Paz' });
+  const next = upcoming(now);
+  return [
+    `Today is ${now.toLocaleDateString('en-GB', { dateStyle: 'full', timeZone: 'America/La_Paz' })} (Bolivia time).`,
+    next.length
+      ? `Upcoming auctions: ${next.map((e) => `${e.name} on ${fmt(e.date)} at ${e.venue}`).join('; ')}.`
+      : 'No upcoming auction has been announced yet.',
+  ].join(' ');
+}

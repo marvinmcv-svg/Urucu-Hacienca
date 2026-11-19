@@ -4,7 +4,7 @@ import { API, MODELS, callModel } from '../../lib/nvidia';
 export const prerender = false;
 
 // Health check for Marvin: is the key set, and does each model answer? Never reveals the key.
-// Open /api/marvin-status/ in a browser. Limited to a few checks per visitor.
+// Open /api/marvin-status/ in a browser (add ?try=vendor/model,... to test others). Limited to a few checks per visitor.
 const seen = new Map<string, number[]>();
 
 export const GET: APIRoute = async ({ request, clientAddress }) => {
@@ -15,15 +15,15 @@ export const GET: APIRoute = async ({ request, clientAddress }) => {
   seen.set(ip, [...recent, now]);
 
   const key = process.env.NVIDIA_API_KEY;
-  const results = [];
-  if (key) {
-    for (const model of MODELS) {
-      const t0 = Date.now();
-      const r = await callModel(key, model, [{ role: 'user', content: 'Reply with: ok' }], request.signal, { stream: false, maxTokens: 8 });
-      if (r.ok) await r.res.body?.cancel();
-      results.push({ model, ok: r.ok, status: r.ok ? 200 : r.status, ms: Date.now() - t0, ...(r.ok ? {} : { detail: r.detail }) });
-    }
-  }
+  // ?try=a,b,c tests other models from the "available" list too (up to 6), to pick working fallbacks.
+  const extra = (new URL(request.url).searchParams.get('try') ?? '').split(',').map((m) => m.trim()).filter((m) => /^[\w.-]+\/[\w.-]+$/.test(m)).slice(0, 6);
+  const models = [...new Set([...MODELS, ...extra])];
+  const results = key ? await Promise.all(models.map(async (model) => {
+    const t0 = Date.now();
+    const r = await callModel(key, model, [{ role: 'user', content: 'Reply with: ok' }], request.signal, { stream: false, maxTokens: 8 });
+    if (r.ok) await r.res.body?.cancel();
+    return { model, inUse: MODELS.includes(model), ok: r.ok, status: r.ok ? 200 : r.status, ms: Date.now() - t0, ...(r.ok ? {} : { detail: r.detail }) };
+  })) : [];
   // The models this key can use right now, so a retired or missing one is easy to replace.
   let available: string[] = [];
   if (key) {

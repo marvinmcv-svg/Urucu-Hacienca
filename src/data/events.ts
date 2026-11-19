@@ -11,7 +11,7 @@ export type Event = {
   credit?: string;
 };
 
-// Source: @haciendasurucu captions. Upcoming = date >= today.
+// Source: @haciendasurucu captions. Pages are built ahead of time; FreshEvents.astro re-checks the dates in the visitor's browser.
 export const events: Event[] = [
   {
     name: '4.º Remate Evolución Genética Sindi', kind: 'auction', date: '2026-11-07T12:00:00-04:00',
@@ -45,5 +45,13 @@ export const events: Event[] = [
   },
 ];
 
-export const upcoming = (now = new Date()) => events.filter((e) => new Date(e.date) >= now && e.kind === 'auction');
-export const past = (now = new Date()) => events.filter((e) => new Date(e.date) < now);
+/** An event stays "upcoming" until this long after it starts, so it isn't dropped while it is still on. */
+export const GRACE_MS = 12 * 60 * 60 * 1000;
+const t = (e: Event) => new Date(e.date).getTime();
+/** Auctions still to come, soonest first. */
+export const upcoming = (now = new Date()) =>
+  events.filter((e) => e.kind === 'auction' && t(e) + GRACE_MS >= now.getTime()).sort((a, b) => t(a) - t(b));
+/** Events that are over, most recent first. */
+export const past = (now = new Date()) => events.filter((e) => t(e) + GRACE_MS < now.getTime()).sort((a, b) => t(b) - t(a));
+/** Events still to come at build time, most recent first: rendered hidden so the visitor's browser can move them into "past" later. */
+export const later = (now = new Date()) => events.filter((e) => t(e) + GRACE_MS >= now.getTime()).sort((a, b) => t(b) - t(a));

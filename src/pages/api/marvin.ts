@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { MARVIN_SYSTEM } from '../../lib/marvin-prompt';
+import { MARVIN_SYSTEM, marvinToday } from '../../lib/marvin-prompt';
 import { isLocale, localeNames } from '../../i18n/ui';
 import { MODELS, callModel } from '../../lib/nvidia';
 
@@ -43,7 +43,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
   const ctrl = new AbortController();
   request.signal.addEventListener('abort', () => ctrl.abort());
   const messages = [
-    { role: 'system', content: `${MARVIN_SYSTEM}\n\nPage language: ${localeNames[input.lang as keyof typeof localeNames]}.` },
+    { role: 'system', content: `${MARVIN_SYSTEM}\n\n# Today\n${marvinToday()}\nPage language: ${localeNames[input.lang as keyof typeof localeNames]}.` },
     ...input.messages,
   ];
   // Try the main model, then the fallbacks, so one unavailable or overloaded model never silences Marvin.

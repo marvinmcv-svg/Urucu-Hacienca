@@ -26,7 +26,8 @@ const links: [RouteKey, Parameters<typeof t>[0]][] = [['about', 'nav.about'], ['
     </div>
   </div>
   <div class="container-x">
-    <p aria-hidden="true" class="select-none overflow-hidden border-t border-paper/15 pt-6 font-display text-[clamp(4rem,17vw,15.5rem)] font-semibold leading-[0.8] tracking-[-0.02em] text-paper/[0.07]">URUCÚ</p>
+    <!-- Decorative wordmark, drawn as generated content so it is not read out or held to text-contrast rules. -->
+    <p aria-hidden="true" data-word="URUCÚ" class="select-none overflow-hidden border-t border-paper/15 pt-6 font-display text-[clamp(4rem,17vw,15.5rem)] font-semibold leading-[0.8] tracking-[-0.02em] text-paper/[0.07] before:content-[attr(data-word)]"></p>
   </div>
   <div class="container-x flex flex-col gap-2 pb-28 pt-6 text-sm text-paper/60 sm:flex-row sm:justify-between sm:pb-8">
     <p>© {new Date().getFullYear()} Haciendas Urucú. {t('footer.rights')}</p>

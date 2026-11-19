@@ -3,8 +3,15 @@
 
 const pending = new WeakSet<HTMLVideoElement>();
 
+/** True when the visitor asked to save data or is on a slow connection: films then stay as their still cover image. */
+export const lean = (() => {
+  const c = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+  return !!c && (c.saveData === true || ['slow-2g', '2g', '3g'].includes(c.effectiveType ?? ''));
+})();
+
 /** Play or pause a film; starts loading it the first time it is wanted. */
 export function want(v: HTMLVideoElement, on: boolean) {
+  if (on && lean) return;
   if (on) {
     if (!v.paused || pending.has(v)) return;
     if (v.preload === 'none') v.preload = 'auto';
@@ -15,6 +22,7 @@ export function want(v: HTMLVideoElement, on: boolean) {
 
 /** Start fetching a film ahead of time without playing it. */
 export function warm(v: HTMLVideoElement) {
+  if (lean) return;
   if (v.preload === 'none') v.preload = 'auto';
 }
 

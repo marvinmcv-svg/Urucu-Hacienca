@@ -5,7 +5,8 @@ import SectionHead from '../../../components/SectionHead.astro';
 import WaButton from '../../../components/WaButton.astro';
 import Icon from '../../../components/Icon.astro';
 import { locales, href, useT, type Locale } from '../../../i18n/ui';
-import { upcoming, past } from '../../../data/events';
+import { upcoming, past, later } from '../../../data/events';
+import FreshEvents from '../../../components/FreshEvents.astro';
 import { site } from '../../../data/site';
 import { posterSrc, videoSrc } from '../../../lib/media';
 
@@ -14,9 +15,12 @@ const lang = Astro.params.lang as Locale;
 const t = useT(lang);
 const next = upcoming();
 const recent = past();
+// Still to come at build time: listed hidden under "past" so they appear there once over (see FreshEvents).
+const pending = later();
+const notifyLot = lang === 'en' ? 'your next auction' : lang === 'pt' ? 'o próximo leilão' : 'el próximo remate';
 const date = (iso: string) => new Date(iso).toLocaleDateString(lang, { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/La_Paz' });
 const time = (iso: string) => new Date(iso).toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit', timeZone: 'America/La_Paz' });
-const eventLd = [...next, ...recent].filter((e) => e.kind === 'auction').map((e) => ({
+const eventLd = [...next, ...recent.filter((e) => e.kind === 'auction')].filter((e) => e.kind === 'auction').map((e) => ({
   '@context': 'https://schema.org', '@type': 'Event', name: e.name, startDate: e.date,
   eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode', eventStatus: 'https://schema.org/EventScheduled',
   location: { '@type': 'Place', name: e.venue, address: { '@type': 'PostalAddress', addressLocality: 'Santa Cruz de la Sierra', addressCountry: 'BO' } },
@@ -27,16 +31,25 @@ const eventLd = [...next, ...recent].filter((e) => e.kind === 'auction').map((e)
   <PageHero label={t('auctions.eyebrow')} title={t('auctions.title')} lead={t('auctions.lead')} />
 
   <section class="container-x">
-    <div class="on-ink relative overflow-hidden rounded-[2px] bg-ink text-paper">
-      <div class="grid gap-10 p-7 sm:p-12 lg:grid-cols-[1fr_auto] lg:items-end lg:p-16">
+    <div class="on-ink relative overflow-hidden rounded-[2px] bg-ink text-paper" data-next>
+      {next.map((e, i) => (
+        <div data-at={e.date} hidden={i > 0} class="grid gap-10 p-7 sm:p-12 lg:grid-cols-[1fr_auto] lg:items-end lg:p-16">
+          <div>
+            <p class="label text-ember">{t('auctions.next')}</p>
+            <h2 class="mt-4 text-4xl leading-none sm:text-6xl">{e.name}</h2>
+            <p class="num mt-4 text-paper/80">{date(e.date)} · {time(e.date)}</p>
+            <p class="mt-6 flex items-center gap-2 text-paper/70"><Icon name="pin" class="size-4 text-dust" />{e.venue}</p>
+          </div>
+          <WaButton intent="lot" lang={lang} vars={{ lot: e.name }} class="w-full sm:w-auto">{t('cta.notify_auction')}</WaButton>
+        </div>
+      ))}
+      <div data-none hidden={next.length > 0} class="grid gap-10 p-7 sm:p-12 lg:grid-cols-[1fr_auto] lg:items-end lg:p-16">
         <div>
           <p class="label text-ember">{t('auctions.next')}</p>
-          {next.length
-            ? next.map((e) => <h2 class="mt-4 text-4xl leading-none sm:text-6xl">{e.name}</h2><p class="num mt-4 text-paper/80">{date(e.date)} · {time(e.date)} · {e.venue}</p>)
-            : <p class="mt-4 max-w-2xl font-display text-[2rem] leading-[1.1] sm:text-5xl">{t('auctions.next_tbd')}</p>}
+          <p class="mt-4 max-w-2xl font-display text-[2rem] leading-[1.1] sm:text-5xl">{t('auctions.next_tbd')}</p>
           <p class="mt-6 flex items-center gap-2 text-paper/70"><Icon name="pin" class="size-4 text-dust" />{site.auctionVenue}</p>
         </div>
-        <WaButton intent="lot" lang={lang} vars={{ lot: next[0]?.name ?? (lang === 'en' ? 'your next auction' : lang === 'pt' ? 'o próximo leilão' : 'el próximo remate') }} class="w-full sm:w-auto">{t('cta.notify_auction')}</WaButton>
+        <WaButton intent="lot" lang={lang} vars={{ lot: notifyLot }} class="w-full sm:w-auto">{t('cta.notify_auction')}</WaButton>
       </div>
     </div>
   </section>
@@ -44,8 +57,8 @@ const eventLd = [...next, ...recent].filter((e) => e.kind === 'auction').map((e)
   <section class="container-x py-24 lg:py-36">
     <SectionHead title={t('auctions.past')} size="md" />
     <ol class="mt-12 border-t border-ink/25">
-      {recent.map((e) => (
-        <li class="grid gap-5 border-b border-ink/15 py-9 md:grid-cols-[11rem_1fr_auto] md:gap-10">
+      {[...pending, ...recent].map((e) => (
+        <li data-past-at={e.date} hidden={pending.includes(e)} class="grid gap-5 border-b border-ink/15 py-9 md:grid-cols-[11rem_1fr_auto] md:gap-10">
           <p class="label num pt-2 text-achiote">{date(e.date)}</p>
           <div>
             <h3 class="text-3xl leading-tight">{e.name}</h3>
@@ -70,4 +83,5 @@ const eventLd = [...next, ...recent].filter((e) => e.kind === 'auction').map((e)
       ))}
     </ol>
   </section>
+  <FreshEvents />
 </Base>

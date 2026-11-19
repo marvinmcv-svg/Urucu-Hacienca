@@ -99,8 +99,7 @@
   &:hover { text-decoration-color: currentColor; }
 }
 
-/* The one authored motion moment: the home headline rises word by word, then the rest fades in. */
-@keyframes rise { from { transform: translateY(105%); } to { transform: none; } }
+/* The home hero's supporting copy fades in after the headline. */
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 .hero-fade { animation: fade 1.2s var(--ease-out-expo) .35s both; }
 
@@ -108,8 +107,3 @@
   .hero-fade { animation: none; }
   html { scroll-behavior: auto; }
 }
-
-/* Home hero: each word rises from its own mask. */
-.hero-word { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: 0.08em; margin-bottom: -0.08em; margin-right: 0.22em; }
-.hero-word > span { display: inline-block; animation: rise 1.1s var(--ease-out-expo) both; }
-@media (prefers-reduced-motion: reduce) { .hero-word > span { animation: none; } }
